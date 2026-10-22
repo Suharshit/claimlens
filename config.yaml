@@ -1,0 +1,24 @@
+# ClaimLens configuration — starting values from context/04-ui-and-stack-brief.md.
+# Tune thresholds here; never hard-code them in agents or tools.
+
+model:
+  temperature: 0          # temperature 0 for intake and decisions
+  # lane / model name: still an open question (see context/05-progress.md).
+  # Keys and endpoints go in .env, never here.
+
+retrieval:
+  top_k: 5
+  min_similarity: 0.45
+
+thresholds:
+  human_review_amount_inr: 200000   # claims above ₹2,00,000 always go to a human
+  fraud_escalate_score: 60          # risk score >= 60 escalates
+  min_confidence: 0.6               # manager confidence below this escalates
+  overclaim_margin_pct: 10          # M5: claimed > payable by this margin → over-claiming flag
+
+paths:
+  corpus: data/corpus
+  policies: data/policies.json
+  prior_claims: data/prior_claims.json
+  state_dir: state
+  run_log: logs/run_log.jsonl

@@ -1,0 +1,29 @@
+# ClaimLens — Python 3.11
+# Lower bounds only for now. Pin exact versions once the team has installed
+# (pip freeze > requirements.lock or replace >= with ==), per 04-ui-and-stack-brief.
+
+# --- Agent framework: OPEN QUESTION (see context/05-progress.md) ---
+# Uncomment exactly one once the team decides, then pin the version.
+# agent-framework          # Microsoft Agent Framework
+# semantic-kernel          # Semantic Kernel
+
+# Schemas, config, env
+pydantic>=2.6
+pyyaml>=6.0
+python-dotenv>=1.0
+
+# Retrieval (RAG)
+sentence-transformers>=2.7
+chromadb>=0.5
+rank-bm25>=0.2.2
+
+# Documents and templates
+pdfplumber>=0.11
+jinja2>=3.1
+
+# Tests and demo
+pytest>=8.0
+jupyter>=1.0
+
+# Optional UI (should-have S4)
+streamlit>=1.35

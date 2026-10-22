@@ -1,0 +1,32 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Generated at run time (keep the folders via .gitkeep).
+# For submission, force-add a sample run: git add -f logs/run_log.jsonl state/CLM-0001.json
+state/*.json
+logs/*.jsonl
+review_queue.json
+
+# Vector index (rebuilt from data/corpus)
+data/index/
+chroma/
+
+# Source PDFs are large; commit the chunked text instead (decide in week 1)
+data/corpus/**/*.pdf
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
