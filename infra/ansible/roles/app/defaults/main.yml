@@ -1,0 +1,6 @@
+# app_version has no default on purpose: pass -e app_version=v1.0.0 (a tag on the
+# Releases page) or answer the deploy.yml prompt.
+app_dir: "/opt/{{ app_name }}"
+app_data_dir: "/var/lib/{{ app_name }}"            # the only folder the app may write
+app_release_dir: "{{ app_dir }}/releases/{{ app_name }}-{{ app_version }}"
+app_release_url: "https://github.com/{{ app_repo }}/releases/download/{{ app_version }}/{{ app_artifact_name }}"

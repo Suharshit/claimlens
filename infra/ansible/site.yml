@@ -1,0 +1,34 @@
+# Build everything from scratch: ansible-playbook site.yml -e app_version=v1.0.0
+- name: Baseline for every server
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Ops server (Puppet server, Nagios)
+  hosts: ops
+  become: true
+  roles:
+    - role: puppet_server
+      when: puppet_enabled
+    - role: nagios
+      when: nagios_enabled
+
+- name: App servers
+  hosts: app
+  become: true
+  roles:
+    - app
+    - role: nrpe
+      when: nagios_enabled
+    - role: puppet_agent
+      when: puppet_enabled
+
+- name: Load balancer
+  hosts: lb
+  become: true
+  roles:
+    - role: lb
+      when: config_owner == 'ansible'
+    - role: puppet_agent
+      when: puppet_enabled

@@ -1,0 +1,28 @@
+[Unit]
+Description={{ app_name }} API (managed by Ansible)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ app_name }}
+WorkingDirectory={{ app_dir }}/current
+ExecStart={{ app_dir }}/current/.venv/bin/python api.py
+{% for k, v in app_env.items() %}
+Environment={{ k }}={{ v }}
+{% endfor %}
+Environment=APP_VERSION={{ app_version }}
+Environment=TMPDIR={{ app_data_dir }}/tmp
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+# Secrets (e.g. the model API key) go here via Ansible Vault once needed (S9)
+EnvironmentFile=-/etc/{{ app_name }}/env
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths={{ app_data_dir }}
+
+[Install]
+WantedBy=multi-user.target

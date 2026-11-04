@@ -1,0 +1,23 @@
+# Values from pipeline.config.yml (Stage 0).
+app_name: claimlens
+app_repo: Suharshit/claimlens
+app_port: 8000
+app_health_path: /healthz
+app_artifact: source                       # binary | container | source
+app_artifact_name: claimlens.tar.gz
+app_install_method: release                # release | copy
+app_local_artifact: "{{ playbook_dir }}/../../dist/claimlens.tar.gz"   # used when method = copy (make build)
+app_env:                                   # environment variables for the app
+  PORT: "{{ app_port }}"
+  HOST: "0.0.0.0"
+app_system_packages: []
+
+config_owner: puppet                       # puppet | ansible
+puppet_enabled: true
+nagios_enabled: true
+ops_private_ip: "{{ hostvars[groups['ops'][0]]['private_ip'] if groups.get('ops') else '' }}"
+
+# Nagios real-function check (S8): run scenario 1 end to end and expect a verdict.
+# Switch on once M7 works (until then the route returns 501). Each check is a full
+# multi-agent run with model calls, so it runs every 30 minutes, not every 5.
+# nagios_functional_args: "--path /claims/CLM-0001/run --method POST --expect-text verdict -w 10 -c 30 -t 60"

@@ -1,0 +1,50 @@
+# pipeline.config.yml — answers from Stage 0 of DEVOPS_PIPELINE_TEMPLATE.md (INT333).
+# Every later stage reads from here. Owner calls answered 2026-10-22.
+project:
+  name: claimlens
+  repo: Suharshit/claimlens
+  language: python                  # 3.11 in CI (project brief); Ubuntu 24.04 servers run 3.12
+  artifact: source
+  artifact_name: claimlens.tar.gz   # git archive of the tagged commit, attached to the GitHub Release
+commands:
+  install: "pip install -r requirements.txt"   # servers use the lean requirements-server.txt
+  lint: "ruff check ."
+  test: "pytest"
+  build: "make build"               # -> dist/claimlens.tar.gz
+  run: "python api.py"              # FastAPI server mode (S1); reads PORT and HOST
+app:
+  port: 8000
+  health_path: /healthz
+  # Nagios real-function check: run scenario 1 end to end. Switched off until M7 works.
+  functional_check: "POST /claims/CLM-0001/run -> 200 with a verdict (enable after M7)"
+  system_packages: []
+environment:
+  target: aws
+  aws_region: ap-south-1            # Mumbai
+  app_count: 2
+  load_balancer: true
+  instance_types: { app: t3.micro, lb: t3.micro, ops: t3.small }
+  terraform_state: local            # S3 backend block left commented out in main.tf
+  workspaces: [dev, prod]
+stages:                             # true = include, false = skip (owner's call)
+  ci: true
+  release: true
+  infra: true
+  ansible: true
+  puppet: true
+  nagios: true
+  make: true
+  demo: true
+  presentation: false
+config_owner: puppet                # Puppet owns nginx LB config, service state, cleanup cron (S7)
+owner_calls:                        # S2–S11: template defaults accepted
+  s2_branching: "main + short-lived feature branches via PRs; protect main, require ci"
+  s3_ci: "app + infra lint, on push to main and PRs to main"
+  s4_release: "auto-release on v* tags; linux/amd64 only"
+  s6_ansible: "install from release; rolling deploy serial 1; prompt for version"
+  s7_puppet: "manual certificate signing; runinterval 30m"
+  s8_nagios: "nagios4 package; web UI via SSH tunnel; no email alerts"
+  s9_secrets: "aws configure locally; Ansible Vault once the model API key is needed"
+  s10_make: "yes"
+  s11_demo: "build before the demo; show both failures (stop app, edit nginx)"
+deadline: TBD

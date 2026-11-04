@@ -3,15 +3,22 @@
 This is the single source of truth for where the project stands. Read it at the start of every chat. Update it at the end of every working session: change task statuses, add a session-log entry (newest first), and record any decision or open question.
 
 ## Current status
-- **Phase:** Week 1 — repository set up, build starting
-- **Current week:** Week 1
-- **Last updated:** 2026-10-22
-- **Next action:** Settle the framework and team-size questions, then start Week 1 tasks from the stubs (A: `tools/schemas.py`, `parse_bill`, 7 scenario claims · B: corpus + `chunk_wording` / `build_index` · C: `tools/state.py`, `tools/logger.py`, `policies.json`, `prior_claims.json`).
+- **Phase:** Week 1 tasks — build starting (calendar: end of Week 2, about two weeks behind plan)
+- **Current week:** Week 2 by calendar; Week 1 tasks still to do
+- **Last updated:** 2026-11-04
+- **Next action:** Push `devops-pipeline`, open the PR, get `ci` green and merge. Then the Week 1 tasks: `tools/state.py` + `tools/logger.py` (M12, M13), `tools/schemas.py` fields, `policies.json` (ASJ-01), `parse_bill`, scenario 1–2 claims. Settle the framework question before Week 2 agent work.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-04 | Solo project: Suharshit owns every Member A/B/C task | No teammates; the A/B/C split stays only as a way to group tasks |
+| 2026-11-04 | Every piece of work is committed and pushed through a branch + PR to `main`, so the `ci` pipeline checks it | Keeps the DevOps pipeline (INT333) exercised on real changes |
+| 2026-11-04 | Text files in the repo must be UTF-8 (a Windows-1252 dash in `requirements.txt` was replaced) | pip on the Linux CI runner reads requirements files as UTF-8 |
+| 2026-10-22 | DevOps pipeline (INT333) built from `DEVOPS_PIPELINE_TEMPLATE.md` on branch `devops-pipeline`; all answers in `pipeline.config.yml`; runbook in `infra/README.md` | Separate course deliverable; it deploys whatever `main` holds and adds no CSE476 feature |
+| 2026-10-22 | Pipeline choices: FastAPI server mode (`api.py`, port 8000, `/healthz`), source tarball artifact, AWS ap-south-1 (2 app + LB + ops), local Terraform state + workspaces, Puppet owns config, every stage but S12 | Owner calls S0–S11; Vagrant ruled out because the PC has 7.3 GB RAM |
+| 2026-10-22 | Servers install the lean `requirements-server.txt` (no PyTorch/Chroma/Jupyter/Streamlit) | 1 GB t3.micro app servers; PyTorch alone needs more than that |
+| 2026-10-22 | `config.yaml` gains `paths.claims: data/claims`; `ruff.toml` pins lint rules; `fastapi`, `uvicorn`, `httpx`, `ruff` added to `requirements.txt` | API looks claims up via `project_path`; CI and laptops lint the same way |
 | 2026-10-22 | Repo: github.com/Suharshit/claimlens, branch `main`; scaffold follows the 02 layout with every agent/tool as a named stub | Everyone starts from the agreed names and signatures |
 | 2026-10-22 | `context/` in the repo mirrors the five project files; update `context/05-progress.md` alongside the project copy each session | Briefs travel with the code |
 | 2026-10-22 | Small additions to the 02 layout: `tools/schemas.py` (Pydantic models), `tools/config.py` (`load_config`, `project_path`, `DISCLAIMER`); Human Desk + Grievance tools live in `tools/decision_tools.py`; corpus builders `chunk_wording` / `build_index` in `tools/retrieval_tools.py` | 02 named no home for these |
@@ -26,19 +33,24 @@ This is the single source of truth for where the project stands. Read it at the 
 
 ## Open questions
 - [ ] Confirm with the instructor that the Indian health-claims variant counts as Q1.
-- [ ] Team size: 3 (full plan) or 2 (drop Human Review Desk and Grievance Drafter)?
+- [x] Team size: solo (2026-11-04).
+- [ ] Solo scope: keep all seven agents, or drop the Grievance Drafter (S2 only)? The Human Review Desk stays, because M11 is a must-have.
 - [ ] Framework: Microsoft Agent Framework or Semantic Kernel? Pin version. (Needed by Week 2, when agents get built.)
 - [ ] Which 3–4 policy wordings to use (start with Arogya Sanjeevani standard wording).
 - [ ] Which model lane / API key the team will use (fill `.env` from `.env.example`).
 - [ ] Agree the shapes of `policies.json` and `data/claims/` (suggestions in `data/README.md`).
 - [ ] Commit the source policy PDFs or only the chunked text? (PDFs are git-ignored for now.)
+- [ ] (DevOps) When M3 lands, how does retrieval run on the lean servers: BM25-only, a prebuilt index, or bigger app instances? Keep heavy imports (`sentence_transformers`, `chromadb`) inside functions so `api.py` still imports on servers.
+- [ ] (DevOps) INT333 demo date (deadline TBD in `pipeline.config.yml`).
+- [ ] (DevOps) Turn on GitHub branch protection for `main` (require the `ci` checks) — needs the repo settings page.
+- [ ] (DevOps) Switch on the Nagios scenario-1 check (`nagios_functional_args`) once M7 works; put the model API key in Ansible Vault then.
 
 ## Team split
 - **Member A** — Intake, Cost Assessment, all money maths and unit tests.
 - **Member B** — RAG corpus, Policy Retrieval, retrieval check.
 - **Member C** — Fraud Signal, Adjudication Manager, Human Review Desk, notebook, README.
 
-(Fill in names: A = ___, B = ___, C = ___)
+Solo project: A = B = C = Suharshit.
 
 ## Four-week plan
 
@@ -55,6 +67,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | ID | Task | Owner | Status | Notes |
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
+| — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | Committed on `devops-pipeline` 2026-11-04 (pytest 32 passed, ruff clean); next: push → PR → CI green → merge, first release, `make up` on AWS |
 | M1 | Claim intake → structured record | A | Not started | Stubs: `tools/schemas.py`, `tools/intake_tools.py` |
 | M2 | Halt on missing policy id / amount | A | Not started | |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Not started | Stubs: `tools/retrieval_tools.py` |
@@ -93,6 +106,10 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-04** · Suharshit · Status review: GitHub `main` still has only the scaffold commit, all agents and tools still stubs, `data/` empty, about two weeks behind plan. Recorded the solo decision. Prepared the DevOps pipeline for its first commit: no secrets or state files staged, replaced a non-UTF-8 dash in `requirements.txt`, pytest 32 passed / 12 skipped, ruff clean. · Next: push `devops-pipeline`, open the PR, CI green, merge; then M12/M13 and the Week 1 data.
+
+- **2026-10-22** · DevOps · Followed `DEVOPS_PIPELINE_TEMPLATE.md`: owner calls recorded in `pipeline.config.yml`; added `api.py` server mode + `tests/test_api.py`, CI and release workflows, Terraform (AWS), Ansible roles, Puppet module, Nagios plugin, `Makefile`, `infra/README.md` runbook. Checked locally: pytest 32 passed, ruff clean, API health/version curl, plugin exit codes 0–3, ansible-lint production 0 failures, syntax-check, templates rendered, terraform fmt + validate, puppet-lint + parser validate, tarball contents. Not yet: CI run on GitHub, release, any AWS apply. · Next: review, commit, push the branch, open a PR, watch CI.
 
 - **2026-10-22** · Setup · Scaffolded the repo to the 02 layout: seven agent stubs (each lists ≥ 2 tools), tool stubs with the agreed function names, `workflow.py`, `config.yaml` (04 starting values), `requirements.txt`, `.env.example`, `.gitignore`, `data/README.md` with suggested data shapes, `CLAUDE.md`, `context/` with the five briefs, smoke tests (green) and skipped placeholders for tool and scenario tests. Pushed to GitHub `main`. · Next: settle framework + team size; start Week 1 tasks.
 - **2026-10-21** · Planning · Brief split into five project files; name changed to ClaimLens. · Next: resolve open questions, start Week 1.

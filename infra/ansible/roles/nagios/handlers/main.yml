@@ -1,0 +1,4 @@
+# Verify the whole config first; on an error run `sudo nagios4 -v /etc/nagios4/nagios.cfg` on ops
+- name: Restart nagios
+  ansible.builtin.shell: nagios4 -v /etc/nagios4/nagios.cfg && systemctl restart nagios4
+  changed_when: true
