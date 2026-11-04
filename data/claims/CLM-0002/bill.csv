@@ -1,0 +1,7 @@
+desc,category,qty,amount
+Room charges (single AC),room,4,32000
+Nursing charges,nursing,4,6400
+Consultant visits,professional,8,12000
+Medicines and IV fluids,pharmacy,1,18000
+"Investigations (serum lipase, CT abdomen)",diagnostics,1,9600
+Gloves,consumables,1,400
