@@ -15,7 +15,7 @@ commands:
 app:
   port: 8000
   health_path: /healthz
-  # Nagios real-function check: run scenario 1 end to end. Switched off until M7 works.
+  # Nagios real-function check: run scenario 1 end to end (on since M7).
   functional_check: "POST /claims/CLM-0001/run -> 200 with a verdict (on since M7, 2026-11-05)"
   system_packages: []
 environment:
