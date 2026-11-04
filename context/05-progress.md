@@ -6,12 +6,16 @@ This is the single source of truth for where the project stands. Read it at the 
 - **Phase:** Week 1 tasks — build starting (calendar: end of Week 2, about two weeks behind plan)
 - **Current week:** Week 2 by calendar; Week 1 tasks still to do
 - **Last updated:** 2026-11-04
-- **Next action:** Push `devops-pipeline`, open the PR, get `ci` green and merge. Then the Week 1 tasks: `tools/state.py` + `tools/logger.py` (M12, M13), `tools/schemas.py` fields, `policies.json` (ASJ-01), `parse_bill`, scenario 1–2 claims. Settle the framework question before Week 2 agent work.
+- **Next action:** Merge `feat/m12-m13-state-log`. Then the rest of Week 1: `tools/schemas.py` fields (+ make `write_state` validate sections), `policies.json` (ASJ-01), `parse_bill`, scenario 1–2 claims. Settle the framework question before Week 2 agent work.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-04 | `write_state(claim_id, section, data, *, agent=None)`: optional `agent` is checked against `SECTION_OWNERS` (non-owner → `PermissionError`); first write creates the record; writes are atomic (temp file + `os.replace`) under a lock | Enforces "each agent writes only its own section" and keeps parallel Policy/Fraud writes from losing updates |
+| 2026-11-04 | Added `set_status(claim_id, status, *, agent)` and `new_state` / `state_path` in `tools/state.py`, and `read_log(claim_id=None)` / `utc_now()` in `tools/logger.py` | `status` isn't an agent section, so it needs its own logged write; tests and trace views need to read the log |
+| 2026-11-04 | Each write is recorded twice: a line in `logs/run_log.jsonl` and an entry in the record's `trace` (same `ts`) | Log test needs every agent in each trace; demo can show the trace from the record alone |
+| 2026-11-04 | Claim ids must match `CLM-\d{4}` in `tools/state.py` (same as `api.py`) | Blocks path tricks like `../x` in state file names |
 | 2026-11-04 | Solo project: Suharshit owns every Member A/B/C task | No teammates; the A/B/C split stays only as a way to group tasks |
 | 2026-11-04 | Every piece of work is committed and pushed through a branch + PR to `main`, so the `ci` pipeline checks it | Keeps the DevOps pipeline (INT333) exercised on real changes |
 | 2026-11-04 | Text files in the repo must be UTF-8 (a Windows-1252 dash in `requirements.txt` was replaced) | pip on the Linux CI runner reads requirements files as UTF-8 |
@@ -67,7 +71,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | ID | Task | Owner | Status | Notes |
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
-| — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | Committed on `devops-pipeline` 2026-11-04 (pytest 32 passed, ruff clean); next: push → PR → CI green → merge, first release, `make up` on AWS |
+| — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged to `main` 2026-11-04; next: first release, `make up` on AWS |
 | M1 | Claim intake → structured record | A | Not started | Stubs: `tools/schemas.py`, `tools/intake_tools.py` |
 | M2 | Halt on missing policy id / amount | A | Not started | |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Not started | Stubs: `tools/retrieval_tools.py` |
@@ -79,8 +83,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M9 | Citation guard | B | Not started | |
 | M10 | Escalation routing | C | Not started | |
 | M11 | Human-in-the-loop write-back | C | Not started | |
-| M12 | Shared claim-state record | C | Not started | Stub: `tools/state.py` |
-| M13 | Append-only run log | C | Not started | Stub: `tools/logger.py` |
+| M12 | Shared claim-state record | C | Done | 2026-11-04 `tools/state.py`, tests in `tests/test_state_log.py` (branch `feat/m12-m13-state-log`) |
+| M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Not started | |
 | M15 | Test file (≥ 3 scenarios; plan 7) | A | Not started | Skipped placeholders in `tests/test_scenarios.py` |
 | S1 | Deduction table in output | A | Not started | |
@@ -98,7 +102,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 - [ ] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure)
 - [ ] Runnable demo notebook with multi-agent trace
 - [ ] Architecture diagram
-- [ ] Append-only run log
+- [x] Append-only run log (M13)
 - [ ] Test file with ≥ 3 scenarios
 
 ## Known issues / blockers
@@ -106,6 +110,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-04** · Suharshit · DevOps PR #1 merged. Built M12 (`tools/state.py`: `read_state`, `write_state` with section ownership, atomic locked writes, `set_status`, per-record trace) and M13 (`tools/logger.py`: append-only `append_log`, `read_log`). 25 new tests incl. parallel Policy/Fraud writes; pytest 57 passed / 12 skipped, ruff clean. · Next: merge `feat/m12-m13-state-log`; then `tools/schemas.py`, `policies.json`, `parse_bill`, scenario 1–2 claims.
 
 - **2026-11-04** · Suharshit · Status review: GitHub `main` still has only the scaffold commit, all agents and tools still stubs, `data/` empty, about two weeks behind plan. Recorded the solo decision. Prepared the DevOps pipeline for its first commit: no secrets or state files staged, replaced a non-UTF-8 dash in `requirements.txt`, pytest 32 passed / 12 skipped, ruff clean. · Next: push `devops-pipeline`, open the PR, CI green, merge; then M12/M13 and the Week 1 data.
 
