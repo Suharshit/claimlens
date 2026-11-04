@@ -1,0 +1,31 @@
+flowchart TB
+    claim["Claim text + bill<br/><i>data/claims/&lt;id&gt;/</i>"]:::input
+    intake["<b>Intake Agent</b><br/>extract_claim_fields · parse_bill · validate_policy"]:::agent
+    halt["<b>Halt</b> (M2)<br/>ask for missing policy id / amount / bill<br/>nothing downstream runs"]:::stop
+    policy["<b>Policy Retrieval Agent</b><br/>get_policy_limits · search_policy_clauses · search_irdai_rules<br/><i>BM25 over chunks.jsonl (IFFCO ASJ wording + IRDAI Lists I–IV), filtered by policy id</i>"]:::agent
+    fraud["<b>Fraud Signal Agent</b><br/>lookup_prior_claims · check_waiting_period · score_risk<br/><i>prior_claims.json · waiting periods</i>"]:::agent
+    cost["<b>Cost Assessment Agent</b><br/>classify_items · room_rent_deduction · compute_payable<br/><i>all rupee maths in Python</i>"]:::agent
+    manager["<b>Adjudication Manager</b><br/>apply_decision_rules · verify_citations · write_decision<br/><i>cites only retrieved clauses</i>"]:::agent
+    auto["<b>Auto decision</b><br/>approve · partial · reject"]:::out
+    human["<b>Human Review Desk</b><br/>create_review_ticket · record_human_verdict"]:::agent
+    closed["<b>Claim closed</b>"]:::out
+    memory[("<b>Shared claim-state record</b> state/&lt;claim_id&gt;.json — each agent writes only its own section<br/>every write appended to <b>logs/run_log.jsonl</b> (append-only)")]:::store
+
+    claim --> intake
+    intake -- "missing data" --> halt
+    intake == "fan-out (parallel)" ==> policy
+    intake == "fan-out (parallel)" ==> fraud
+    policy -- "limits posted first" --> cost
+    policy -- "retrieved clauses" --> manager
+    fraud -- "risk score, waiting period" --> manager
+    cost -- "payable, deduction table" --> manager
+    manager -- "auto" --> auto --> closed
+    manager -- "escalate: > ₹2,00,000 · risk ≥ 60 · no grounding<br/>· citation miss · confidence < 0.6" --> human
+    human -- "reviewer verdict + note" --> closed
+    closed ~~~ memory
+
+    classDef agent fill:#E8F0FE,stroke:#3367D6,color:#111;
+    classDef input fill:#FFF8E1,stroke:#F9A825,color:#111;
+    classDef out fill:#E6F4EA,stroke:#188038,color:#111;
+    classDef stop fill:#FCE8E6,stroke:#C5221F,color:#111;
+    classDef store fill:#F1F3F4,stroke:#5F6368,color:#111;
