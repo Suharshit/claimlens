@@ -1,0 +1,28 @@
+{
+  "scenario": 2,
+  "verdict": "partial",
+  "claimed": 78400,
+  "payable": 56145,
+  "overclaim": true,
+  "clauses": ["ASJ-01:5.a.i", "ASJ-01:5.note.ii", "IRDAI:List-I", "ASJ-01:10.e"],
+  "deductions": [
+    {"item": "Room charges (single AC)", "amount": 12000, "reason": "room rent above cap: 4 days x (8000 - 5000)", "clause_id": "ASJ-01:5.a.i"},
+    {"item": "Nursing charges", "amount": 2400, "reason": "proportionate deduction 5000/8000", "clause_id": "ASJ-01:5.note.ii"},
+    {"item": "Consultant visits", "amount": 4500, "reason": "proportionate deduction 5000/8000", "clause_id": "ASJ-01:5.note.ii"},
+    {"item": "Gloves", "amount": 400, "reason": "non-payable item", "clause_id": "IRDAI:List-I"},
+    {"item": "Co-payment 5%", "amount": 2955, "reason": "5% co-payment on admissible claim", "clause_id": "ASJ-01:10.e"}
+  ],
+  "working": [
+    "Bill total = 32000 + 6400 + 12000 + 18000 + 9600 + 400 = 78400",
+    "Room 8000/day > cap 5000/day -> admissible room = 4 x 5000 = 20000 (cut 12000)",
+    "Proportionate ratio = 5000 / 8000 = 0.625, applied to associated expenses only (nursing, professional, OT)",
+    "Not applied to pharmacy, diagnostics, consumables or implants (IRDAI) -> medicines 18000 and investigations 9600 paid in full",
+    "Nursing 6400 x 0.625 = 4000 (cut 2400); consultant 12000 x 0.625 = 7500 (cut 4500)",
+    "Non-payable (IRDAI List I): gloves 400",
+    "Admissible = 20000 + 4000 + 7500 + 18000 + 9600 = 59100",
+    "Co-pay 5% of 59100 = 2955",
+    "Payable = 59100 - 2955 = 56145",
+    "Check: 78400 - (12000 + 2400 + 4500 + 400 + 2955) = 56145",
+    "Over-claim: (78400 - 56145) / 56145 = 39.6% > 10% margin -> flag"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "ASJ-01": {
+    "policy_id": "ASJ-01",
+    "name": "Arogya Sanjeevani (standard wording)",
+    "source": "IRDAI standard Arogya Sanjeevani wording as filed by insurers (section numbers from the Acko prospectus); waiting periods updated to the Oct 2024 revision (PED and joint replacement 48 -> 36 months). Verify every number and section against the wording PDF chunked into data/corpus/policies/ASJ-01/.",
+    "inception_date": "2026-01-01",
+    "sum_insured": 500000,
+    "room_cap_per_day": 5000,
+    "icu_cap_per_day": 10000,
+    "copay_pct": 5,
+    "sub_limits": {
+      "cataract_per_eye": 40000,
+      "modern_treatments": 250000
+    },
+    "waiting_periods": {
+      "initial_days": 30,
+      "specific_conditions_months": 24,
+      "pre_existing_months": 36,
+      "joint_replacement_months": 36
+    },
+    "specific_conditions": ["cataract", "hernia", "hysterectomy"],
+    "pre_hospitalisation_days": 30,
+    "post_hospitalisation_days": 60,
+    "clause_refs": {
+      "room_rent": "ASJ-01:5.a.i",
+      "icu": "ASJ-01:5.a.ii",
+      "proportionate_deduction": "ASJ-01:5.note.ii",
+      "cataract": "ASJ-01:5.d",
+      "modern_treatments": "ASJ-01:5.g",
+      "pre_existing": "ASJ-01:6.a",
+      "initial_waiting": "ASJ-01:6.b",
+      "specific_conditions": "ASJ-01:6.c.i",
+      "copay": "ASJ-01:10.e",
+      "non_payable_items": "IRDAI:List-I"
+    }
+  }
+}
