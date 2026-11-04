@@ -83,6 +83,12 @@ def test_query_plan_adds_condition_specific_queries():
     assert policy_agent.plan_queries({"diagnosis": "acute appendicitis"}, ASJ) == policy_agent.STANDARD_QUERIES
 
 
+def test_each_irdai_query_finds_its_own_list():
+    from tools.retrieval_tools import search_irdai_rules
+    firsts = [search_irdai_rules(q, k=1)[0]["clause_id"] for q in policy_agent.IRDAI_QUERIES]
+    assert firsts == ["IRDAI:List-I", "IRDAI:List-II", "IRDAI:List-III", "IRDAI:List-IV"]
+
+
 # ---------- cost agent: sub-limit choice ----------
 
 @pytest.mark.parametrize("diagnosis,sub", [

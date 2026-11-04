@@ -43,7 +43,7 @@ STANDARD_QUERIES = [
 IRDAI_QUERIES = [
     "items for which coverage is not available",
     "items subsumed into room charges",
-    "items subsumed into procedure charges",
+    "subsumed into procedure charges",
     "items subsumed into costs of treatment",
 ]
 
