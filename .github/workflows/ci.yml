@@ -1,0 +1,97 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  app:
+    name: App — lint, test (py${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]   # 3.11 is the project version; Ubuntu 24.04 servers run 3.12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements*.txt
+      - name: Install
+        run: |
+          # CPU-only PyTorch first; the default wheel pulls ~2 GB of CUDA libraries
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt
+      - name: Lint
+        run: ruff check .
+      - name: Test
+        run: pytest
+
+  server:
+    name: Server install — lean deps, health, Nagios plugin
+    runs-on: ubuntu-24.04            # same OS as the servers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build
+        run: make build
+      - name: Install the tarball the way Ansible does
+        run: |
+          mkdir -p /tmp/release
+          tar -xzf dist/claimlens.tar.gz -C /tmp/release
+          python -m venv /tmp/release/.venv
+          /tmp/release/.venv/bin/pip install -r /tmp/release/requirements-server.txt
+      - name: Start the API and check it with the Nagios plugin
+        run: |
+          cd /tmp/release && APP_VERSION=ci .venv/bin/python api.py &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/healthz && break; sleep 1; done
+          python3 infra/nagios/plugins/check_app.py -H 127.0.0.1 -p 8000 --path /healthz --expect-text ok
+          python3 infra/nagios/plugins/check_app.py -H 127.0.0.1 -p 8000 --path /version --expect-text '"version":"ci"'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: claimlens-build
+          path: dist/claimlens.tar.gz
+
+  infra:
+    name: Infra — validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+      - name: Terraform fmt + validate
+        if: ${{ hashFiles('infra/terraform/**') != '' }}
+        working-directory: infra/terraform
+        run: |
+          terraform fmt -check -recursive
+          terraform init -backend=false
+          terraform validate
+
+      - name: Ansible lint
+        if: ${{ hashFiles('infra/ansible/**') != '' }}
+        working-directory: infra/ansible
+        run: |
+          pip install ansible-core ansible-lint
+          ansible-galaxy collection install -r requirements.yml
+          ansible-lint site.yml deploy.yml
+
+      - name: Puppet lint + parser validate
+        if: ${{ hashFiles('infra/puppet/**') != '' }}
+        run: |
+          sudo gem install --no-document puppet-lint puppet:8.10.0
+          puppet-lint --fail-on-warnings infra/puppet
+          puppet parser validate $(find infra/puppet -name '*.pp')
+          for f in $(find infra/puppet -name '*.rb'); do ruby -c "$f"; done
+
+      - name: Nagios plugin check
+        if: ${{ hashFiles('infra/nagios/**') != '' }}
+        run: python3 -m py_compile infra/nagios/plugins/check_app.py

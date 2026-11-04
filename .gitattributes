@@ -7,3 +7,26 @@
 *.csv text eol=lf
 *.pdf binary
 *.png binary
+
+# Kept out of the release tarball (git archive, make build)
+.github/ export-ignore
+infra/ export-ignore
+context/ export-ignore
+DEVOPS_PIPELINE_TEMPLATE.md export-ignore
+pipeline.config.yml export-ignore
+Makefile export-ignore
+
+# Infra files are read by Linux tools (WSL make, Ansible, servers): always LF
+Makefile text eol=lf
+*.yml text eol=lf
+*.tf text eol=lf
+*.tftpl text eol=lf
+*.hcl text eol=lf
+*.j2 text eol=lf
+*.pp text eol=lf
+*.erb text eol=lf
+*.rb text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.toml text eol=lf
+*.txt text eol=lf
