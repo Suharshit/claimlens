@@ -24,7 +24,7 @@ ClaimLens reads an Indian health-insurance claim and its hospital bill, checks b
 
 Intake runs first; then **Policy Retrieval and Fraud Signal run in parallel** — the policy check and the fraud check need nothing from each other. **Cost waits only for the policy limits**: Policy posts them first, so Cost starts while clause retrieval is still running. The **Manager fans in** all three and is the single place a verdict is made, which keeps it auditable. Escalation sends the claim to a **human** with the system's recommended payout. Agents never import each other: they talk only through one shared record, `state/<claim_id>.json`, where each agent may write only its own section, and every write is appended to `logs/run_log.jsonl`.
 
-Orchestration today is `asyncio` (`workflow.py`), each agent's steps in a worker thread; moving it onto Microsoft Agent Framework / Semantic Kernel is pending (see `context/05-progress.md`).
+The graph is a **Microsoft Agent Framework** workflow (`workflow.py`, `agent-framework-core` 1.24): each agent is an executor, `add_fan_out_edges` / `add_fan_in_edges` give the parallel branches and the Manager's fan-in, and the only message on an edge is the claim id.
 
 ## Tools: what is deterministic and why
 

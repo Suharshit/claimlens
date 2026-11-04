@@ -2,10 +2,9 @@
 # Lower bounds only for now. Pin exact versions once the team has installed
 # (pip freeze > requirements.lock or replace >= with ==), per 04-ui-and-stack-brief.
 
-# --- Agent framework: OPEN QUESTION (see context/05-progress.md) ---
-# Uncomment exactly one once the team decides, then pin the version.
-# agent-framework          # Microsoft Agent Framework
-# semantic-kernel          # Semantic Kernel
+# --- Agent framework: Microsoft Agent Framework (decided 2026-11-05) ---
+# workflow.py is a WorkflowBuilder graph; the core package has no model-SDK or PyTorch deps.
+agent-framework-core==1.24.0
 
 # Schemas, config, env
 pydantic>=2.6

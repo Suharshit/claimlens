@@ -1,20 +1,22 @@
 """ClaimLens workflow — fan-out / fan-in orchestration with human routing (M7, M10, M11).
 
-    Intake
-      │
-      ├── fan-out ──► Policy Retrieval ──(limits)──► Cost Assessment ─┐
-      │                                                               ├─ fan-in ─► Adjudication Manager
-      └── fan-out ──► Fraud Signal ───────────────────────────────────┘                 │
-                                                                       auto ◄───────────┴───► escalate
-                                                                         │                      │
-                                                                  Auto decision        Human Review Desk
-                                                                         └──────► Claim closed ◄┘
+Built on **Microsoft Agent Framework** workflows (``agent-framework-core``): each agent is an
+executor, the graph below is a ``WorkflowBuilder`` with fan-out and fan-in edge groups, and the
+framework runs ready executors concurrently (synchronous agent steps run in its thread pool).
 
-Concurrency: asyncio — each agent's steps run in a worker thread (``asyncio.to_thread``), so the
-Policy and Fraud agents really do run at the same time; ``tools.state`` serialises their writes.
-Cost starts as soon as Policy has posted the limits (an ``asyncio.Event``), while Policy keeps
-retrieving clauses. The Manager waits for all three. When the agent framework is chosen, its
-concurrent orchestration replaces this function; the agents' ``run_sync`` bodies stay as they are.
+    intake ──fan-out──► policy_limits ──fan-out──► policy_retrieve ─┐
+       │                                     └───► cost ────────────┼─ fan-in ─► manager ──► human_desk
+       └────────fan-out──► fraud ──────────────────────────────────┘              │ (escalated)
+                                                                              (auto: closed)
+
+- Policy Retrieval and Fraud Signal start together after intake.
+- Cost starts as soon as Policy has posted the limits, while Policy keeps retrieving clauses.
+- The Manager runs once all three branches have delivered (fan-in).
+- An intake halt (scenario 7) or an auto decision ends the run; an escalation opens a review
+  ticket and the run ends with status ``escalated``; ``human_desk.review(...)`` closes it.
+
+Agents never message each other's data: the only message on the edges is the claim id. Everything
+else goes through the shared claim-state record (``tools.state``).
 """
 
 from __future__ import annotations
@@ -23,12 +25,77 @@ import asyncio
 import sys
 from typing import Any
 
+from agent_framework import Workflow, WorkflowBuilder, WorkflowContext, executor
+
 from agents import cost_agent, fraud_agent, human_desk, intake_agent, manager_agent, policy_agent
 from tools.config import DISCLAIMER
 from tools.logger import log_step
 from tools.state import read_state, reset_state, set_status
 
 AGENTS = [intake_agent, policy_agent, fraud_agent, cost_agent, manager_agent, human_desk]
+
+
+def build_workflow() -> Workflow:
+    """The ClaimLens graph as a Microsoft Agent Framework workflow. Message on every edge: the claim id."""
+
+    @executor(id="intake")
+    async def intake(claim_id: str, ctx: WorkflowContext[str, str]) -> None:
+        log_step(claim_id, "workflow", "start", "intake")
+        record = await intake_agent.run(claim_id)
+        if record.get("halt"):
+            log_step(claim_id, "workflow", "stop", f"intake halted: {record['halt']['reason']}")
+            await ctx.yield_output(claim_id)               # nothing downstream runs
+            return
+        set_status(claim_id, "assessing", agent="workflow")
+        log_step(claim_id, "workflow", "fan-out", "Policy Retrieval and Fraud Signal start together")
+        await ctx.send_message(claim_id)
+
+    @executor(id="policy_limits")
+    async def policy_limits(claim_id: str, ctx: WorkflowContext[str]) -> None:
+        await asyncio.to_thread(policy_agent.post_limits, claim_id)
+        await ctx.send_message(claim_id)                   # → retrieval and Cost, in parallel
+
+    @executor(id="policy_retrieve")
+    async def policy_retrieve(claim_id: str, ctx: WorkflowContext[str]) -> None:
+        await asyncio.to_thread(policy_agent.retrieve, claim_id)
+        await ctx.send_message(claim_id)
+
+    @executor(id="fraud")
+    async def fraud(claim_id: str, ctx: WorkflowContext[str]) -> None:
+        await fraud_agent.run(claim_id)
+        await ctx.send_message(claim_id)
+
+    @executor(id="cost")
+    async def cost(claim_id: str, ctx: WorkflowContext[str]) -> None:
+        await cost_agent.run(claim_id)
+        await ctx.send_message(claim_id)
+
+    @executor(id="manager")
+    async def manager(claim_ids: list[str], ctx: WorkflowContext[str, str]) -> None:
+        claim_id = claim_ids[0]
+        log_step(claim_id, "workflow", "fan-in", "policy, fraud and cost signals in; Manager decides")
+        record = await manager_agent.run(claim_id)
+        if record["status"] == "escalated":
+            await ctx.send_message(claim_id)
+        else:
+            log_step(claim_id, "workflow", "done", f"status {record['status']}")
+            await ctx.yield_output(claim_id)
+
+    @executor(id="human_desk")
+    async def desk(claim_id: str, ctx: WorkflowContext[str, str]) -> None:
+        record = await human_desk.run(claim_id)
+        log_step(claim_id, "workflow", "done", f"status {record['status']} — waiting for a reviewer")
+        await ctx.yield_output(claim_id)
+
+    return (
+        WorkflowBuilder(name="claimlens", description="Health-claim adjudication: fan-out / fan-in with human routing",
+                        start_executor=intake)
+        .add_fan_out_edges(intake, [policy_limits, fraud])
+        .add_fan_out_edges(policy_limits, [policy_retrieve, cost])
+        .add_fan_in_edges([policy_retrieve, cost, fraud], manager)
+        .add_edge(manager, desk)
+        .build()
+    )
 
 
 async def run_claim(claim_id: str) -> dict:
@@ -40,32 +107,7 @@ async def run_claim(claim_id: str) -> dict:
     ``human_desk.review(...)`` records the reviewer's verdict and closes it.
     """
     reset_state(claim_id)
-    log_step(claim_id, "workflow", "start", "intake")
-    record = await intake_agent.run(claim_id)
-    if record.get("halt"):
-        log_step(claim_id, "workflow", "stop", f"intake halted: {record['halt']['reason']}")
-        return read_state(claim_id)
-
-    set_status(claim_id, "assessing", agent="workflow")
-    limits_posted = asyncio.Event()
-
-    async def policy_branch() -> None:
-        await asyncio.to_thread(policy_agent.post_limits, claim_id)
-        limits_posted.set()
-        await asyncio.to_thread(policy_agent.retrieve, claim_id)
-
-    async def cost_branch() -> None:
-        await limits_posted.wait()
-        await cost_agent.run(claim_id)
-
-    log_step(claim_id, "workflow", "fan-out", "Policy Retrieval and Fraud Signal start together")
-    await asyncio.gather(policy_branch(), fraud_agent.run(claim_id), cost_branch())
-    log_step(claim_id, "workflow", "fan-in", "policy, fraud and cost signals in; Manager decides")
-
-    record = await manager_agent.run(claim_id)
-    if record["status"] == "escalated":
-        record = await human_desk.run(claim_id)
-    log_step(claim_id, "workflow", "done", f"status {record['status']}")
+    await build_workflow().run(claim_id)
     return read_state(claim_id)
 
 

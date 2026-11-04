@@ -7,9 +7,8 @@ Note: A verdict may only cite clause ids that were actually retrieved (citation 
 
 Agents never import each other; they communicate only through the claim-state
 record (tools/state.py) and workflow.py. ``run_sync`` holds the agent's steps;
-``run`` is the async entry point the workflow awaits. When the agent framework is
-chosen (open question in context/05-progress.md), each ``run_sync`` becomes the
-body of that framework's agent/executor — the tools and state contract stay the same.
+``run`` is the async entry point that this agent's Microsoft Agent Framework
+executor in workflow.py awaits.
 """
 
 from __future__ import annotations
