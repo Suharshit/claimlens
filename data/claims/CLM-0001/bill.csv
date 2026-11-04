@@ -1,11 +1,11 @@
 desc,category,qty,amount
-Room charges (twin sharing),room,3,13500
+Room charges (twin sharing),room,3,12000
 Nursing charges,nursing,3,3000
 Surgeon fees - laparoscopic appendectomy,professional,1,25000
 Anaesthetist fees,professional,1,8000
 Operation theatre charges,ot,1,15000
 Medicines and IV fluids,pharmacy,1,12000
-"Investigations (CBC, USG abdomen)",diagnostics,1,7300
+"Investigations (CBC, USG abdomen)",diagnostics,1,8800
 Gloves,consumables,1,450
 Mask,consumables,1,250
 Laundry charges,misc,1,300

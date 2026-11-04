@@ -33,8 +33,8 @@ BillCategory = Literal[
     "room", "icu", "nursing", "professional", "ot",
     "pharmacy", "diagnostics", "consumables", "implants", "misc",
 ]
-"""Bill line categories. Under the ASJ-01 wording (4.1 note 2) only ``pharmacy`` is exempt
-from the proportionate room-rent deduction; see context/05-progress.md."""
+"""Bill line categories. ``room`` + ``nursing`` per day are capped together (ASJ-01:4.1.i); under the
+proportionate deduction (ASJ-01:4.1.1.note2) only ``pharmacy`` is exempt. See context/05-progress.md."""
 
 Verdict = Literal["approve", "partial", "reject", "escalate"]
 Status = Literal["intake", "assessing", "decided", "escalated", "closed"]

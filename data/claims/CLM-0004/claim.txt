@@ -3,7 +3,8 @@ Claim for reimbursement under policy ASJ-01, policyholder PH-1004.
 Patient: Suresh Iyer (synthetic). Admitted on 5 October 2026 to Heartline Cardiac Centre
 (synthetic) with chest pain; diagnosed with acute coronary syndrome (triple-vessel disease) and
 underwent coronary angioplasty (PTCA) with two drug-eluting stents. Two days in ICU at Rs 10,000
-per day, then three days in a twin-sharing room at Rs 5,000 per day. Discharged on 10 October 2026.
+per day, then three days in a twin-sharing room at Rs 4,000 per day
+(nursing Rs 1,000 per day). Discharged on 10 October 2026.
 
 Final hospital bill number HCC/26/00562. Total amount claimed: Rs 4,50,000.
 Discharge summary, final bill, angiography report and stent invoices attached.
