@@ -1,0 +1,13 @@
+{
+  "scenario": 7,
+  "verdict": null,
+  "claimed": null,
+  "payable": null,
+  "final_status": "intake",
+  "halt": "missing_claimed_amount",
+  "working": [
+    "Claim text has a policy id (ASJ-01) but no claimed amount, and no bill is attached",
+    "Intake halts with IntakeHalt asking for the claimed amount / final bill",
+    "No downstream agent runs; status stays intake"
+  ]
+}

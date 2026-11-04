@@ -1,0 +1,9 @@
+desc,category,qty,amount
+Room charges (twin sharing),room,2,9000
+Nursing charges,nursing,2,2000
+Surgeon fees - laparoscopic hernioplasty,professional,1,28000
+Anaesthetist fees,professional,1,7000
+Operation theatre charges,ot,1,12000
+Polypropylene mesh,implants,1,9000
+Medicines and IV fluids,pharmacy,1,6000
+"Investigations (CBC, USG)",diagnostics,1,4000

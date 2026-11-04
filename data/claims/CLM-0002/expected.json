@@ -2,27 +2,64 @@
   "scenario": 2,
   "verdict": "partial",
   "claimed": 78400,
-  "payable": 56145,
+  "payable": 52725,
   "overclaim": true,
-  "clauses": ["ASJ-01:5.a.i", "ASJ-01:5.note.ii", "IRDAI:List-I", "ASJ-01:10.e"],
-  "deductions": [
-    {"item": "Room charges (single AC)", "amount": 12000, "reason": "room rent above cap: 4 days x (8000 - 5000)", "clause_id": "ASJ-01:5.a.i"},
-    {"item": "Nursing charges", "amount": 2400, "reason": "proportionate deduction 5000/8000", "clause_id": "ASJ-01:5.note.ii"},
-    {"item": "Consultant visits", "amount": 4500, "reason": "proportionate deduction 5000/8000", "clause_id": "ASJ-01:5.note.ii"},
-    {"item": "Gloves", "amount": 400, "reason": "non-payable item", "clause_id": "IRDAI:List-I"},
-    {"item": "Co-payment 5%", "amount": 2955, "reason": "5% co-payment on admissible claim", "clause_id": "ASJ-01:10.e"}
+  "clauses": [
+    "ASJ-01:4.1.i",
+    "ASJ-01:4.1.note2",
+    "IRDAI:List-I",
+    "ASJ-01:9.3"
   ],
+  "deductions": [
+    {
+      "item": "Room charges (single AC)",
+      "amount": 12000,
+      "reason": "room rent above cap: 4 days x (8000 - 5000)",
+      "clause_id": "ASJ-01:4.1.i"
+    },
+    {
+      "item": "Nursing charges",
+      "amount": 2400,
+      "reason": "proportionate deduction 5000/8000",
+      "clause_id": "ASJ-01:4.1.note2"
+    },
+    {
+      "item": "Consultant visits",
+      "amount": 4500,
+      "reason": "proportionate deduction 5000/8000",
+      "clause_id": "ASJ-01:4.1.note2"
+    },
+    {
+      "item": "Investigations (serum lipase, CT abdomen)",
+      "amount": 3600,
+      "reason": "proportionate deduction 5000/8000",
+      "clause_id": "ASJ-01:4.1.note2"
+    },
+    {
+      "item": "Gloves",
+      "amount": 400,
+      "reason": "non-payable item",
+      "clause_id": "IRDAI:List-I"
+    },
+    {
+      "item": "Co-payment 5%",
+      "amount": 2775,
+      "reason": "5% co-payment on admissible claim",
+      "clause_id": "ASJ-01:9.3"
+    }
+  ],
+  "final_status": "closed",
   "working": [
     "Bill total = 32000 + 6400 + 12000 + 18000 + 9600 + 400 = 78400",
-    "Room 8000/day > cap 5000/day -> admissible room = 4 x 5000 = 20000 (cut 12000)",
-    "Proportionate ratio = 5000 / 8000 = 0.625, applied to associated expenses only (nursing, professional, OT)",
-    "Not applied to pharmacy, diagnostics, consumables or implants (IRDAI) -> medicines 18000 and investigations 9600 paid in full",
-    "Nursing 6400 x 0.625 = 4000 (cut 2400); consultant 12000 x 0.625 = 7500 (cut 4500)",
-    "Non-payable (IRDAI List I): gloves 400",
-    "Admissible = 20000 + 4000 + 7500 + 18000 + 9600 = 59100",
-    "Co-pay 5% of 59100 = 2955",
-    "Payable = 59100 - 2955 = 56145",
-    "Check: 78400 - (12000 + 2400 + 4500 + 400 + 2955) = 56145",
-    "Over-claim: (78400 - 56145) / 56145 = 39.6% > 10% margin -> flag"
+    "Room 8000/day > cap 5000/day (ASJ-01:4.1.i) -> admissible room = 4 x 5000 = 20000 (cut 12000)",
+    "Proportionate ratio = 5000 / 8000 = 0.625 (ASJ-01:4.1 note 2), applied to every other expense except medicines",
+    "Nursing 6400 x 0.625 = 4000 (cut 2400); consultant 12000 x 0.625 = 7500 (cut 4500); investigations 9600 x 0.625 = 6000 (cut 3600)",
+    "Medicines 18000 paid in full (exempt under note 2)",
+    "Gloves 400: non-payable (IRDAI List I), so removed before the proportionate step",
+    "Admissible = 20000 + 4000 + 7500 + 18000 + 6000 = 55500",
+    "Co-pay 5% of 55500 = 2775 (ASJ-01:9.3)",
+    "Payable = 55500 - 2775 = 52725",
+    "Check: 78400 - (12000 + 2400 + 4500 + 3600 + 400 + 2775) = 52725",
+    "Over-claim: (78400 - 52725) / 52725 = 48.7% > 10% margin -> flag"
   ]
 }

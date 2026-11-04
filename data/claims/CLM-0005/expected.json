@@ -1,0 +1,44 @@
+{
+  "scenario": 5,
+  "verdict": "escalate",
+  "claimed": 99300,
+  "payable": 94050,
+  "overclaim": false,
+  "clauses": [
+    "IRDAI:List-I",
+    "ASJ-01:9.3"
+  ],
+  "deductions": [
+    {
+      "item": "Gloves",
+      "amount": 300,
+      "reason": "non-payable item",
+      "clause_id": "IRDAI:List-I"
+    },
+    {
+      "item": "Co-payment 5%",
+      "amount": 4950,
+      "reason": "5% co-payment on admissible claim",
+      "clause_id": "ASJ-01:9.3"
+    }
+  ],
+  "escalation_reasons": [
+    "fraud_risk"
+  ],
+  "fraud_reasons": [
+    "soon_after_inception",
+    "duplicate_bill_number"
+  ],
+  "fraud_min_score": 60,
+  "final_status": "escalated",
+  "working": [
+    "Bill total = 8000 + 1600 + 30000 + 8000 + 12000 + 25000 + 9000 + 5400 + 300 = 99300",
+    "Accident -> the 30-day initial wait (ASJ-01:6.2) does not apply",
+    "Room 4000/day <= cap 5000/day -> no proportionate deduction",
+    "Non-payable: gloves 300; admissible = 99000; co-pay 5% = 4950; payable = 94050",
+    "Admit 2026-01-21 is 20 days after cover started 2026-01-01 -> soon_after_inception",
+    "Bill number CGH/25/07731 already used by prior claim PC-0017 (data/prior_claims.json) -> duplicate_bill_number",
+    "Two strong rules -> risk score >= 60 -> escalate (fraud_risk); waits for a human, status escalated",
+    "Over-claim: (99300 - 94050) / 94050 = 5.6% < 10% -> no flag"
+  ]
+}
