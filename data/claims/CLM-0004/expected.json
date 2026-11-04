@@ -37,8 +37,8 @@
   "human_verdict": "approve",
   "final_status": "closed",
   "working": [
-    "Bill total = 20000 + 15000 + 6000 + 90000 + 60000 + 160000 + 50000 + 48000 + 600 + 400 = 450000",
-    "ICU 10000/day = cap (ASJ-01:4.1.ii); room 5000/day = cap (ASJ-01:4.1.i) -> no proportionate deduction",
+    "Bill total = 20000 + 12000 + 3000 + 90000 + 60000 + 160000 + 50000 + 54000 + 600 + 400 = 450000",
+    "ICU 10000/day = cap (ASJ-01:4.1.ii; ICU charges include critical-care nursing, 3.26); room + nursing 4000 + 1000 = 5000/day = cap (ASJ-01:4.1.i) -> no proportionate deduction",
     "Non-payable (IRDAI List I): gloves 600 + mask 400 = 1000",
     "Admissible = 450000 - 1000 = 449000",
     "Co-pay 5% of 449000 = 22450 (ASJ-01:9.3)",

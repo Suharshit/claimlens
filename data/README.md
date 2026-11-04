@@ -34,7 +34,7 @@ Validated by the models in `tools/schemas.py` (`PolicyLimits`, `BillItem`, `Expe
     "specific_conditions": ["hernia of all types", "cataract and age-related eye ailments", "..."],
     "pre_hospitalisation_days": 30,
     "post_hospitalisation_days": 60,
-    "clause_refs": {"room_rent": "ASJ-01:4.1.i", "proportionate_deduction": "ASJ-01:4.1.note2", "copay": "ASJ-01:9.3", "non_payable_items": "IRDAI:List-I"}
+    "clause_refs": {"room_rent": "ASJ-01:4.1.i", "proportionate_deduction": "ASJ-01:4.1.1.note2", "copay": "ASJ-01:9.3", "non_payable_items": "IRDAI:List-I"}
   }
 }
 ```
@@ -54,16 +54,17 @@ expected.json    scenario, verdict, claimed, payable, overclaim, clauses, deduct
 ```
 
 Bill categories: `room, icu, nursing, professional, ot, pharmacy, diagnostics, consumables, implants, misc`.
+Room + nursing per day are capped together (ASJ-01:4.1.i); the ICU rate already includes critical-care nursing (3.26).
 `expected.json` holds the hand calculation in `working`; its numbers must add up (`claimed − Σ deductions = payable`).
 Reason codes (`escalation_reasons`, `fraud_reasons`, `halt`) are the `Literal` types in `tools/schemas.py`.
 The over-claim flag is set only when payable > 0.
 
-Clause ids follow `<POLICY_ID>:<section>` (sections as dotted lowercase, e.g. `ASJ-01:4.1.note2`) or `IRDAI:<list>`; see `corpus/SOURCES.md`.
+Clause ids follow `<POLICY_ID>:<section>` (sections as dotted lowercase, e.g. `ASJ-01:4.1.1.note2`) or `IRDAI:<list>`; see `corpus/SOURCES.md`.
 
 | Claim | Scenario | Verdict | Payable | Notes |
 | --- | --- | --- | --- | --- |
 | CLM-0001 | 1 Clean approval (appendectomy) | approve | ₹79,610 | non-payables + 5% co-pay |
-| CLM-0002 | 2 Room-rent breach (pancreatitis, single AC ₹8,000/day) | partial | ₹52,725 | proportionate 5000/8000 on all but medicines |
+| CLM-0002 | 2 Room-rent breach (pancreatitis, room ₹7,000 + nursing ₹1,000/day) | partial | ₹48,925 | proportionate 5000/8000 on all but medicines |
 | CLM-0003 | 3 Waiting period (planned hernia repair, month 6) | reject | ₹0 | `ASJ-01:6.3.i` |
 | CLM-0004 | 4 High value (PTCA, ₹4,50,000) | escalate → human approves | ₹4,26,550 | closed by reviewer |
 | CLM-0005 | 5 Fraud signal (day 20, reused bill no.) | escalate | ₹94,050 | risk ≥ 60, two reasons |

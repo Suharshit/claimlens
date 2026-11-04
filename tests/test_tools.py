@@ -24,7 +24,7 @@ def write(tmp_path, name, text):
 def test_parse_bill_reads_line_items():
     items = parse_bill(project_path("claims") / "CLM-0001" / "bill.csv")
     assert len(items) == 11
-    assert items[0] == {"desc": "Room charges (twin sharing)", "category": "room", "qty": 3, "amount": 13500}
+    assert items[0] == {"desc": "Room charges (twin sharing)", "category": "room", "qty": 3, "amount": 12000}
     assert items[6]["desc"] == "Investigations (CBC, USG abdomen)"     # quoted comma kept
     assert sum(i["amount"] for i in items) == 85000
     assert all(isinstance(i["amount"], int) for i in items)

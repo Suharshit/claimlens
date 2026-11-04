@@ -33,8 +33,8 @@
   "final_status": "escalated",
   "working": [
     "Bill total = 8000 + 1600 + 30000 + 8000 + 12000 + 25000 + 9000 + 5400 + 300 = 99300",
-    "Accident -> the 30-day initial wait (ASJ-01:6.2) does not apply",
-    "Room 4000/day <= cap 5000/day -> no proportionate deduction",
+    "Accident -> the 30-day initial wait (ASJ-01:6.2.i) does not apply",
+    "Room + nursing = 4000 + 800 = 4800/day <= cap 5000/day -> no proportionate deduction",
     "Non-payable: gloves 300; admissible = 99000; co-pay 5% = 4950; payable = 94050",
     "Admit 2026-01-21 is 20 days after cover started 2026-01-01 -> soon_after_inception",
     "Bill number CGH/25/07731 already used by prior claim PC-0017 (data/prior_claims.json) -> duplicate_bill_number",

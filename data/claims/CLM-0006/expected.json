@@ -11,8 +11,8 @@
   ],
   "final_status": "escalated",
   "working": [
-    "Bill total = 7500 + 1800 + 6000 + 14700 + 12000 = 42000",
-    "GHC-01 limits exist in policies.json (room cap 3000/day, no co-pay), so Cost can still compute: payable 42000",
+    "Bill total = 7500 + 1500 + 6000 + 15000 + 12000 = 42000",
+    "GHC-01 limits exist in policies.json (room + nursing 2500 + 500 = 3000/day = cap, no co-pay), so Cost can still compute: payable 42000",
     "GHC-01 has no wording in the corpus -> retrieval returns no clause above min_similarity",
     "No grounding clause -> the Manager must not auto-decide; escalate with 'no grounding clause found'",
     "No clause may be cited, so clauses and deductions are empty"

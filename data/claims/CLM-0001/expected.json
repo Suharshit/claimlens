@@ -42,13 +42,13 @@
   ],
   "final_status": "closed",
   "working": [
-    "Bill total = 13500 + 3000 + 25000 + 8000 + 15000 + 12000 + 7300 + 450 + 250 + 300 + 200 = 85000",
-    "Room 4500/day <= cap 5000/day (ASJ-01:4.1.i: 2% of 500000, max 5000) -> no proportionate deduction",
+    "Bill total = 12000 + 3000 + 25000 + 8000 + 15000 + 12000 + 8800 + 450 + 250 + 300 + 200 = 85000",
+    "Room + nursing = 4000 + 1000 = 5000/day <= cap 5000/day (ASJ-01:4.1.i caps room rent, boarding and nursing together) -> no proportionate deduction",
     "Non-payable (IRDAI List I): 450 + 250 + 300 + 200 = 1200",
     "Admissible = 85000 - 1200 = 83800",
     "Co-pay 5% of 83800 = 4190 (ASJ-01:9.3)",
     "Payable = 83800 - 4190 = 79610 (under sum insured 500000)",
     "Over-claim: (85000 - 79610) / 79610 = 6.8% < 10% margin -> no flag",
-    "Appendicitis is acute, not a 24-month specified condition (ASJ-01:6.3.i); admit 2026-09-02 is past the 30-day initial wait (ASJ-01:6.2) from 2026-01-01"
+    "Appendicitis is acute, not a 24-month specified condition (ASJ-01:6.3.i); admit 2026-09-02 is past the 30-day initial wait (ASJ-01:6.2.i) from 2026-01-01"
   ]
 }

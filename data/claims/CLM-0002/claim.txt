@@ -2,7 +2,7 @@ Claim for reimbursement under policy ASJ-01, policyholder PH-1002.
 
 Patient: Meena Sharma (synthetic). Admitted on 10 August 2026 to Lakeview Hospital
 (synthetic) with severe upper abdominal pain, diagnosed as acute pancreatitis and managed
-medically. Chose a single AC room at Rs 8,000 per day. Discharged on 14 August 2026.
+medically. Chose a single AC room at Rs 7,000 per day (nursing Rs 1,000 per day). Discharged on 14 August 2026.
 
-Final hospital bill number LVH/26/11872. Total amount claimed: Rs 78,400.
+Final hospital bill number LVH/26/11872. Total amount claimed: Rs 72,000.
 Discharge summary, final bill and investigation reports attached.

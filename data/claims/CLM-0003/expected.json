@@ -17,7 +17,7 @@
   ],
   "final_status": "closed",
   "working": [
-    "Bill total = 9000 + 2000 + 28000 + 7000 + 12000 + 9000 + 6000 + 4000 = 77000",
+    "Bill total = 8000 + 2000 + 28000 + 7000 + 12000 + 9000 + 6000 + 5000 = 77000",
     "Hernia of all types is a specified condition: 24-month waiting period (ASJ-01:6.3.i)",
     "Cover started 2026-01-01; admit 2026-07-14 is 6 months in, so still inside the wait",
     "Planned surgery, not an accident -> no exception; whole claim rejected, payable 0",

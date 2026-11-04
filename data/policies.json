@@ -44,12 +44,12 @@
     "clause_refs": {
       "room_rent": "ASJ-01:4.1.i",
       "icu": "ASJ-01:4.1.ii",
-      "proportionate_deduction": "ASJ-01:4.1.note2",
+      "proportionate_deduction": "ASJ-01:4.1.1.note2",
       "cataract": "ASJ-01:4.3",
       "modern_treatments": "ASJ-01:4.6",
       "non_payable_items": "IRDAI:List-I",
       "pre_existing": "ASJ-01:6.1",
-      "initial_waiting": "ASJ-01:6.2",
+      "initial_waiting": "ASJ-01:6.2.i",
       "specific_conditions": "ASJ-01:6.3.i",
       "joint_replacement": "ASJ-01:6.3.ii",
       "copay": "ASJ-01:9.3"
