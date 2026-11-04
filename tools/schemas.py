@@ -171,18 +171,20 @@ class CostSection(_Model):
 class DecisionSection(_Model):
     """``decision`` section. Written by the Adjudication Manager."""
     verdict: Verdict
-    payout: Rupees
+    payout: Rupees                       # for "escalate": the recommended payout for the reviewer
     clauses: list[ClauseId] = Field(default_factory=list)
     rationale: str
     confidence: Annotated[float, Field(ge=0, le=1)]
+    escalation_reasons: list[EscalationReason] = Field(default_factory=list)
 
 
 class HumanSection(_Model):
     """``human`` section. Written by the Human Review Desk."""
     ticket: str | None = None
     reviewer: str | None = None
-    verdict: Verdict | None = None
+    verdict: Literal["approve", "partial", "reject"] | None = None
     note: str | None = None
+    payout: Rupees | None = None         # final payout once the reviewer decides
 
 
 class Letter(_Model):

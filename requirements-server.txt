@@ -1,7 +1,7 @@
 # ClaimLens — lean install for the deployed API (DevOps pipeline, S6).
 # No PyTorch / sentence-transformers, chromadb, jupyter or streamlit: the 1 GB
-# app servers can't hold them. Revisit when M3 retrieval lands (BM25-only on
-# servers, or a prebuilt index) — see context/05-progress.md.
+# app servers can't hold them. Retrieval on the servers is BM25 over the
+# committed data/corpus/chunks.jsonl (rank-bm25 below) — see context/05-progress.md.
 
 fastapi>=0.115
 uvicorn>=0.30

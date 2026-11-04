@@ -66,7 +66,7 @@ def new_state(claim_id: str) -> dict[str, Any]:
     record: dict[str, Any] = {"claim_id": claim_id, "status": "intake"}
     for section in SECTIONS:
         record[section] = [] if section == "bill_items" else None
-    record["human"] = {"ticket": None, "reviewer": None, "verdict": None, "note": None}
+    record["human"] = {"ticket": None, "reviewer": None, "verdict": None, "note": None, "payout": None}
     record["trace"] = []
     return record
 

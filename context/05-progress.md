@@ -12,6 +12,12 @@ This is the single source of truth for where the project stands. Read it at the 
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-05 | `apply_decision_rules`: base verdict = reject if the waiting-period check excluded the admission (payout 0, cite its clause); partial if any deduction goes beyond IRDAI-list rows and co-pay; else approve. Escalation reasons in fixed order: high_value (> ₹2,00,000), fraud_risk (≥ 60), no_grounding (nothing retrieved), citation_failed, low_confidence (< 0.6). An escalation keeps the recommended payout | Deterministic, testable verdicts; the reviewer sees what the system would have paid |
+| 2026-11-05 | Confidence = the lowest retrieval score among the cited clauses (an unretrieved citation counts 0; 1.0 when nothing needs citing) | A verdict is only as grounded as its weakest citation — ties M9 and M10 together |
+| 2026-11-05 | `write_decision`: escalation → status `escalated`; auto decision → `decided` → `closed`. `DecisionSection` gains `escalation_reasons`; rationale is a deterministic template (the LLM may rephrase it later, never change numbers) | Matches the flow (auto decision closes the claim) |
+| 2026-11-05 | Human Review Desk: `review_queue.json` (config `paths.review_queue`, git-ignored with `state/`), ticket ids `RV-0001…`, one open ticket per claim; `record_human_verdict(claim_id, verdict, note, *, reviewer, payout)` — approve pays the recommendation, reject 0, partial needs a payout ≤ recommendation; note required; claim must be escalated; closes the ticket and the claim. `HumanSection` gains `payout` | M11 write-back with a clear audit trail |
+| 2026-11-05 | Retrieval = BM25 (`rank_bm25`) over one policy's chunks in `chunks.jsonl`; reported score = share of the query's IDF weight the clause contains (0–1), and only hits ≥ `retrieval.min_similarity` (0.45) return; an empty result means "no grounding clause". Vectors stay an optional add-on | Runs on the 1 GB servers and in CI without PyTorch or a model download; the threshold has a fixed meaning; scenario 6 (GHC-01) returns nothing |
+| 2026-11-05 | The Policy Retrieval Agent asks one plain query per limit it needs (room rent, ICU, proportionate note, co-pay, 30-day wait, specified-condition wait + diagnosis) and `search_irdai_rules` for List I; `tests/test_search.py` pins each query to its clause | The citation guard needs every clause Cost and Fraud cite to be in the retrieved set |
 | 2026-11-05 | Fraud rules and weights live in config `fraud_rules`: admitted < 60 days after cover start 35 · claimed ≥ 80% of SI 25 · bill number already in `prior_claims.json` 40 · same-day discharge, not day care 20; capped at 100 | Scenario 5 = 35 + 40 = 75 ≥ 60; any single rule stays below 60; scenario 4 lists amount_near_sum_insured (25) without escalating on fraud |
 | 2026-11-05 | `check_waiting_period(start, admit, condition, *, limits, accident=False)`: 30-day wait (6.2.i), 48-month joint replacement (6.3.ii), 24-month specified conditions (6.3.i) matched by whole-word `condition_terms` in `policies.json`; accidents skip all of these; PED (6.1) not checked (no declared-PED data) | Scenario 3 rejects on `6.3.i`; scenario 5's accident on day 20 isn't excluded; terms are data, not code |
 | 2026-11-05 | `FraudSection` = `score`, `reasons` (`FraudReason` codes), `details` (one sentence each), `waiting_period` (`WaitingPeriodCheck`); `ClaimIntake.accident` added | The Manager needs the waiting-period result to reject; codes are testable, details readable |
@@ -73,7 +79,7 @@ This is the single source of truth for where the project stands. Read it at the 
 - [x] Shapes of `policies.json` and `data/claims/` agreed (2026-11-04, `data/README.md`).
 - [x] IFFCO wording PDF downloaded and every scenario/limit clause id checked against it (2026-11-04, `tests/test_retrieval.py`).
 - [x] Commit only the chunked text (`data/corpus/chunks.jsonl`); PDFs stay git-ignored (2026-11-04).
-- [ ] (DevOps) When M3 search lands, how does retrieval run on the lean servers: BM25-only over the committed `chunks.jsonl` (no PDF/pdfplumber needed), a prebuilt vector index, or bigger app instances? Keep heavy imports inside functions so `api.py` still imports on servers.
+- [x] (DevOps) Retrieval on the lean servers: BM25 over the committed `chunks.jsonl` (2026-11-05); `rank-bm25` is already in `requirements-server.txt`.
 - [ ] Road ambulance: 4.1.1.v covers it up to ₹2,000 but List I item 67 is "AMBULANCE" — `classify_items` would mark a line named exactly "Ambulance" non-payable. Not in any scenario; decide if a claim needs it.
 - [ ] (DevOps) INT333 demo date (deadline TBD in `pipeline.config.yml`).
 - [ ] (DevOps) Turn on GitHub branch protection for `main` (require the `ci` checks) — needs the repo settings page.
@@ -104,15 +110,15 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged to `main` 2026-11-04; next: first release, `make up` on AWS |
 | M1 | Claim intake → structured record | A | In progress | 2026-11-04: `tools/schemas.py` filled, `parse_bill`, `validate_policy`, `load_policies` done + tested; `extract_claim_fields` (LLM) waits for the framework |
 | M2 | Halt on missing policy id / amount | A | In progress | `IntakeHalt` raised for missing/unknown policy and bad bills; missing-amount halt comes with `extract_claim_fields` |
-| M3 | RAG over policies + IRDAI, filtered by policy id | B | In progress | 2026-11-04: `split_clauses`, `chunk_wording`, `build_index`, `load_chunks` done; 202 chunks in `chunks.jsonl`; search tools next (Week 2) |
+| M3 | RAG over policies + IRDAI, filtered by policy id | B | Done | 2026-11-04 chunking (202 chunks); 2026-11-05 `search_policy_clauses`, `get_policy_limits`, `search_irdai_rules` (BM25, 0–1 IDF-coverage score, policy filter); `tests/test_search.py` |
 | M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
 | M5 | Over-claiming flag | A | Done | 2026-11-04 `overclaim_flag`; set in `compute_payable` from config margin |
 | M6 | Fraud risk score with reasons | C | Done | 2026-11-05 `lookup_prior_claims`, `find_bill_number`, `check_waiting_period`, `score_risk` in `tools/fraud_tools.py`; `tests/test_fraud_tools.py` |
 | M7 | Parallel fan-out + fan-in | C | Not started | Stub: `workflow.py` |
-| M8 | Four verdicts with payout + clause | C | Not started | |
-| M9 | Citation guard | B | Not started | |
-| M10 | Escalation routing | C | Not started | |
-| M11 | Human-in-the-loop write-back | C | Not started | |
+| M8 | Four verdicts with payout + clause | C | Done | 2026-11-05 `apply_decision_rules`, `write_decision`; `tests/test_decision_tools.py` |
+| M9 | Citation guard | B | Done | 2026-11-05 `verify_citations`; failure escalates (`citation_failed`) |
+| M10 | Escalation routing | C | Done | 2026-11-05 five reasons in `apply_decision_rules` |
+| M11 | Human-in-the-loop write-back | C | Done | 2026-11-05 `create_review_ticket`, `record_human_verdict`, `review_queue` |
 | M12 | Shared claim-state record | C | Done | 2026-11-04 `tools/state.py`, tests in `tests/test_state_log.py` (branch `feat/m12-m13-state-log`) |
 | M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Not started | |
