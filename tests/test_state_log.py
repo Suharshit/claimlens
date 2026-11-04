@@ -93,7 +93,7 @@ def test_first_write_creates_record_in_brief_shape(tmp_paths):
     assert record["status"] == "intake"
     assert record["intake"] == INTAKE_STORED
     assert record["bill_items"] == []
-    assert record["human"] == {"ticket": None, "reviewer": None, "verdict": None, "note": None}
+    assert record["human"] == {"ticket": None, "reviewer": None, "verdict": None, "note": None, "payout": None}
     assert set(state.SECTIONS) <= set(record)
     assert state.read_state("CLM-0001") == record
 

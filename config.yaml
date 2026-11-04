@@ -32,4 +32,5 @@ paths:
   policies: data/policies.json
   prior_claims: data/prior_claims.json
   state_dir: state
+  review_queue: state/review_queue.json
   run_log: logs/run_log.jsonl
