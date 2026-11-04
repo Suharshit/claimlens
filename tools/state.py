@@ -2,6 +2,8 @@
 
 Week 1 · M12. Agents talk to each other only through this record.
 - Each agent writes only its own section (``SECTION_OWNERS``).
+- Each section is validated against its model in ``tools.schemas.SECTION_MODELS``
+  and the whole record against ``ClaimState`` before it is saved.
 - Every write is appended to the run log and to the record's own ``trace``.
 - Writes are atomic (temp file + rename) and serialised by a lock, because the
   Policy and Fraud agents write in parallel.
@@ -20,6 +22,7 @@ from typing import Any
 
 from tools.config import project_path
 from tools.logger import append_log, utc_now
+from tools.schemas import SECTION_MODELS, ClaimState
 
 # Section names each agent may write (02-architecture-brief, agent roster).
 SECTIONS: tuple[str, ...] = (
@@ -68,21 +71,27 @@ def new_state(claim_id: str) -> dict[str, Any]:
     return record
 
 
-def _to_jsonable(data: Any) -> Any:
-    """Accept Pydantic models (``model_dump``) or plain JSON data; reject anything else."""
+def _unwrap_models(data: Any) -> Any:
+    """Turn Pydantic models (or a list of them) into plain data; copy so caller edits can't leak in."""
     if hasattr(data, "model_dump"):
-        data = data.model_dump(mode="json")
-    elif isinstance(data, list):
-        data = [d.model_dump(mode="json") if hasattr(d, "model_dump") else d for d in data]
-    try:
-        json.dumps(data)
-    except (TypeError, ValueError) as exc:
-        raise TypeError(f"section data is not JSON-serialisable: {exc}") from exc
+        return data.model_dump(mode="json")
+    if isinstance(data, list):
+        return [d.model_dump(mode="json") if hasattr(d, "model_dump") else copy.deepcopy(d) for d in data]
     return copy.deepcopy(data)
 
 
+def _validate_section(section: str, data: Any) -> Any:
+    """Check ``data`` against the section's model; return it as plain JSON (dates as ISO strings).
+
+    Raises ``pydantic.ValidationError`` (a ``ValueError``) naming the bad field.
+    """
+    adapter = SECTION_MODELS[section]
+    return adapter.dump_python(adapter.validate_python(_unwrap_models(data)), mode="json")
+
+
 def _save(claim_id: str, record: dict[str, Any]) -> None:
-    """Write the whole record atomically: temp file in the same folder, then rename."""
+    """Validate the whole record, then write it atomically: temp file in the same folder, then rename."""
+    ClaimState.model_validate(record)
     path = state_path(claim_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{claim_id}.", suffix=".tmp")
@@ -112,6 +121,8 @@ def write_state(
     """Write one section of the record, then ``append_log`` the write. Returns the new record.
 
     - Rejects unknown sections (see ``SECTIONS``); never touches other sections.
+    - Validates ``data`` against ``SECTION_MODELS[section]``; a bad payload raises ``ValueError``
+      and leaves the record and the log unchanged.
     - ``agent`` (optional) is checked against ``SECTION_OWNERS``; a non-owner gets ``PermissionError``.
     - Creates the record (``new_state``) on the first write.
     """
@@ -120,7 +131,7 @@ def write_state(
     owner = SECTION_OWNERS[section]
     if agent is not None and agent != owner:
         raise PermissionError(f"{agent} may not write section {section!r} (owner: {owner})")
-    payload = _to_jsonable(data)
+    payload = _validate_section(section, data)
 
     with _LOCK:
         try:

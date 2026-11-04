@@ -83,13 +83,15 @@ def test_read_log_filters_by_claim(tmp_paths):
 
 INTAKE = {"policy_id": "ASJ-01", "patient": "Test Patient", "admit": "2026-09-02",
           "discharge": "2026-09-05", "diagnosis": "appendicitis", "room_type": "single", "claimed": 85000}
+# Optional intake fields are filled with None once validated.
+INTAKE_STORED = {**INTAKE, "policyholder_id": None, "bill_number": None}
 
 
 def test_first_write_creates_record_in_brief_shape(tmp_paths):
     record = state.write_state("CLM-0001", "intake", INTAKE, agent="intake_agent")
     assert record["claim_id"] == "CLM-0001"
     assert record["status"] == "intake"
-    assert record["intake"] == INTAKE
+    assert record["intake"] == INTAKE_STORED
     assert record["bill_items"] == []
     assert record["human"] == {"ticket": None, "reviewer": None, "verdict": None, "note": None}
     assert set(state.SECTIONS) <= set(record)
@@ -100,7 +102,7 @@ def test_write_touches_only_its_own_section(tmp_paths):
     state.write_state("CLM-0001", "intake", INTAKE)
     state.write_state("CLM-0001", "fraud", {"score": 22, "reasons": ["soon after inception"]})
     record = state.read_state("CLM-0001")
-    assert record["intake"] == INTAKE
+    assert record["intake"] == INTAKE_STORED
     assert record["fraud"]["score"] == 22
     assert record["policy"] is None
 
@@ -141,8 +143,10 @@ def test_malformed_claim_id_rejected(tmp_paths, bad_id):
 def test_unserialisable_data_leaves_record_unchanged(tmp_paths):
     state.write_state("CLM-0001", "intake", INTAKE)
     before = state.read_state("CLM-0001")
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         state.write_state("CLM-0001", "fraud", {"score": object()})
+    with pytest.raises(ValueError):
+        state.write_state("CLM-0001", "fraud", {"score": 150, "reasons": []})
     assert state.read_state("CLM-0001") == before
     assert len(logger.read_log("CLM-0001")) == 1
 
@@ -181,7 +185,9 @@ def test_parallel_policy_and_fraud_writes_both_survive(tmp_paths):
     def writer(section: str, agent: str) -> None:
         try:
             for i in range(25):
-                state.write_state("CLM-0001", section, {"round": i}, agent=agent)
+                data = ({"clauses": [{"clause_id": "ASJ-01:5.a.i", "text": "room rent", "score": i / 100}]}
+                        if section == "policy" else {"score": i, "reasons": []})
+                state.write_state("CLM-0001", section, data, agent=agent)
         except BaseException as exc:  # pragma: no cover - surfaced below
             errors.append(exc)
 
@@ -194,8 +200,33 @@ def test_parallel_policy_and_fraud_writes_both_survive(tmp_paths):
 
     assert errors == []
     record = state.read_state("CLM-0001")
-    assert record["policy"] == {"round": 24}
-    assert record["fraud"] == {"round": 24}
+    assert record["policy"]["clauses"][0]["score"] == 0.24
+    assert record["fraud"] == {"score": 24, "reasons": []}
     assert len(record["trace"]) == 51
     assert len(logger.read_log("CLM-0001")) == 51
     assert list(tmp_paths["state_dir"].glob("*.tmp")) == []  # no temp files left behind
+
+
+# ---------- section validation against tools.schemas ----------
+
+@pytest.mark.parametrize("section,bad", [
+    ("intake", {**INTAKE, "claimed": 85000.5}),                      # money must be int rupees
+    ("intake", {**INTAKE, "claimed": -1}),
+    ("intake", {**INTAKE, "discharge": "2026-09-01"}),               # before admit
+    ("intake", {**INTAKE, "surprise": 1}),                           # unknown field
+    ("bill_items", [{"desc": "Room", "category": "spa", "qty": 1, "amount": 100}]),
+    ("cost", {"deductions": [], "payable": "79610"}),                # string, not int
+    ("decision", {"verdict": "maybe", "payout": 0, "rationale": "", "confidence": 0.5}),
+    ("decision", {"verdict": "approve", "payout": 0, "clauses": ["4.3"], "rationale": "", "confidence": 0.5}),
+])
+def test_invalid_section_is_rejected_and_nothing_written(tmp_paths, section, bad):
+    with pytest.raises(ValueError):
+        state.write_state("CLM-0001", section, bad)
+    assert not state.state_path("CLM-0001").exists()
+    assert logger.read_log() == []
+
+
+def test_dates_are_stored_as_iso_strings(tmp_paths):
+    from datetime import date
+    state.write_state("CLM-0001", "intake", {**INTAKE, "admit": date(2026, 9, 2)})
+    assert state.read_state("CLM-0001")["intake"]["admit"] == "2026-09-02"
