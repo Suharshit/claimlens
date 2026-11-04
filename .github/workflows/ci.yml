@@ -56,6 +56,8 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/healthz && break; sleep 1; done
           python3 infra/nagios/plugins/check_app.py -H 127.0.0.1 -p 8000 --path /healthz --expect-text ok
           python3 infra/nagios/plugins/check_app.py -H 127.0.0.1 -p 8000 --path /version --expect-text '"version":"ci"'
+          # real-function check: scenario 1 end to end on the lean install (same check Nagios runs)
+          python3 infra/nagios/plugins/check_app.py -H 127.0.0.1 -p 8000 --path /claims/CLM-0001/run --method POST --expect-text '"verdict":"approve"' -w 10 -c 30 -t 60
       - uses: actions/upload-artifact@v4
         with:
           name: claimlens-build

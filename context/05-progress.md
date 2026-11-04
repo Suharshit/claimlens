@@ -12,6 +12,12 @@ This is the single source of truth for where the project stands. Read it at the 
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-05 | Workflow (M7) = asyncio: each agent's `run_sync` runs in a worker thread; Policy and Fraud start together; Policy posts limits first (`post_limits`) and an `asyncio.Event` starts Cost while Policy keeps retrieving (`retrieve`); the Manager fans in; an escalation opens a review ticket and returns status `escalated`; `human_desk.review(...)` closes it. A re-run resets the record (`reset_state`); the run log keeps history | Real parallelism with the existing state lock; framework-neutral, so the chosen framework only replaces the orchestration, not the agents |
+| 2026-11-05 | `extract_claim_fields` is a deterministic rule-based extractor for the synthetic claim format (policy id, policyholder, patient, dates, diagnosis + procedure, room, amount, bill number, accident); halts with `IntakeHalt(reason=…)` on a missing policy id or amount. The LLM path is added with the framework; the rule path stays for CI/offline and as the test oracle | No model lane or API key yet; CI must run without one |
+| 2026-11-05 | Intake halts are recorded with `set_halt` → record `halt` = {reason, message}, status stays `intake`; `HaltReason` adds `missing_bill`, `invalid_bill` | Scenario 7 is visible in the record and the log, and nothing downstream runs |
+| 2026-11-05 | "No grounding" = no clause from the claim's own policy wording retrieved (IRDAI lists alone don't ground a decision) | IRDAI lists apply to every policy; scenario 6 must still escalate |
+| 2026-11-05 | `CLAIMLENS_RUNTIME_DIR` moves `state/`, `logs/` and the review queue (tests, notebook, servers); every agent logs each tool call with `log_step` | Tests never write into the repo; the trace shows every tool |
+| 2026-11-05 | Nagios real-function check switched on (`nagios_functional_args`), and CI's server job runs the same POST `/claims/CLM-0001/run` check on the lean install | M7 works on the lean server deps (checked: HTTP 200 in 0.4 s) |
 | 2026-11-05 | `apply_decision_rules`: base verdict = reject if the waiting-period check excluded the admission (payout 0, cite its clause); partial if any deduction goes beyond IRDAI-list rows and co-pay; else approve. Escalation reasons in fixed order: high_value (> ₹2,00,000), fraud_risk (≥ 60), no_grounding (nothing retrieved), citation_failed, low_confidence (< 0.6). An escalation keeps the recommended payout | Deterministic, testable verdicts; the reviewer sees what the system would have paid |
 | 2026-11-05 | Confidence = the lowest retrieval score among the cited clauses (an unretrieved citation counts 0; 1.0 when nothing needs citing) | A verdict is only as grounded as its weakest citation — ties M9 and M10 together |
 | 2026-11-05 | `write_decision`: escalation → status `escalated`; auto decision → `decided` → `closed`. `DecisionSection` gains `escalation_reasons`; rationale is a deterministic template (the LLM may rephrase it later, never change numbers) | Matches the flow (auto decision closes the claim) |
@@ -83,7 +89,7 @@ This is the single source of truth for where the project stands. Read it at the 
 - [ ] Road ambulance: 4.1.1.v covers it up to ₹2,000 but List I item 67 is "AMBULANCE" — `classify_items` would mark a line named exactly "Ambulance" non-payable. Not in any scenario; decide if a claim needs it.
 - [ ] (DevOps) INT333 demo date (deadline TBD in `pipeline.config.yml`).
 - [ ] (DevOps) Turn on GitHub branch protection for `main` (require the `ci` checks) — needs the repo settings page.
-- [ ] (DevOps) Switch on the Nagios scenario-1 check (`nagios_functional_args`) once M7 works; put the model API key in Ansible Vault then.
+- [x] (DevOps) Nagios scenario-1 check switched on (2026-11-05). Put the model API key in Ansible Vault once intake uses the LLM.
 
 ## Team split
 - **Member A** — Intake, Cost Assessment, all money maths and unit tests.
@@ -108,13 +114,13 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
 | — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged to `main` 2026-11-04; next: first release, `make up` on AWS |
-| M1 | Claim intake → structured record | A | In progress | 2026-11-04: `tools/schemas.py` filled, `parse_bill`, `validate_policy`, `load_policies` done + tested; `extract_claim_fields` (LLM) waits for the framework |
-| M2 | Halt on missing policy id / amount | A | In progress | `IntakeHalt` raised for missing/unknown policy and bad bills; missing-amount halt comes with `extract_claim_fields` |
+| M1 | Claim intake → structured record | A | In progress | Rule-based `extract_claim_fields` + Intake Agent done (2026-11-05), all 7 claims extract correctly; LLM extraction path waits for the framework + model lane |
+| M2 | Halt on missing policy id / amount | A | Done | 2026-11-05 `IntakeHalt(reason)` + `set_halt`; scenario 7 halts, nothing downstream runs |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Done | 2026-11-04 chunking (202 chunks); 2026-11-05 `search_policy_clauses`, `get_policy_limits`, `search_irdai_rules` (BM25, 0–1 IDF-coverage score, policy filter); `tests/test_search.py` |
 | M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
 | M5 | Over-claiming flag | A | Done | 2026-11-04 `overclaim_flag`; set in `compute_payable` from config margin |
 | M6 | Fraud risk score with reasons | C | Done | 2026-11-05 `lookup_prior_claims`, `find_bill_number`, `check_waiting_period`, `score_risk` in `tools/fraud_tools.py`; `tests/test_fraud_tools.py` |
-| M7 | Parallel fan-out + fan-in | C | Not started | Stub: `workflow.py` |
+| M7 | Parallel fan-out + fan-in | C | Done (framework pending) | 2026-11-05 `workflow.run_claim` (asyncio) + all agent `run` functions; must still be moved onto Agent Framework / Semantic Kernel for the submission |
 | M8 | Four verdicts with payout + clause | C | Done | 2026-11-05 `apply_decision_rules`, `write_decision`; `tests/test_decision_tools.py` |
 | M9 | Citation guard | B | Done | 2026-11-05 `verify_citations`; failure escalates (`citation_failed`) |
 | M10 | Escalation routing | C | Done | 2026-11-05 five reasons in `apply_decision_rules` |
@@ -122,7 +128,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M12 | Shared claim-state record | C | Done | 2026-11-04 `tools/state.py`, tests in `tests/test_state_log.py` (branch `feat/m12-m13-state-log`) |
 | M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Not started | |
-| M15 | Test file (≥ 3 scenarios; plan 7) | A | In progress | All 7 scenario claims + hand-worked `expected.json` ready (CLM-0001…0007); `tests/test_scenarios.py` still skipped until M7 |
+| M15 | Test file (≥ 3 scenarios; plan 7) | A | Done | 2026-11-05 `tests/test_scenarios.py`: all 7 scenarios end to end + parallelism, section ownership, re-run and append-only log tests |
 | S1 | Deduction table in output | A | In progress | Table produced by `compute_payable` (item, amount, reason, clause); showing it in the notebook/UI comes later |
 | S2 | Grievance letter draft | — | Not started | |
 | S3 | Missing-document check | — | Not started | |
@@ -132,14 +138,14 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Submission checklist
 - [ ] Built on Microsoft Agent Framework or Semantic Kernel
-- [ ] ≥ 4 agents, one module each
-- [ ] Every agent calls ≥ 2 Python tools
-- [ ] RAG grounding + shared state used by every agent
+- [x] ≥ 4 agents, one module each (7)
+- [x] Every agent calls ≥ 2 Python tools
+- [x] RAG grounding + shared state used by every agent
 - [ ] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure)
 - [ ] Runnable demo notebook with multi-agent trace
 - [ ] Architecture diagram
 - [x] Append-only run log (M13)
-- [ ] Test file with ≥ 3 scenarios
+- [x] Test file with ≥ 3 scenarios (all 7)
 
 ## Known issues / blockers
 (none yet)

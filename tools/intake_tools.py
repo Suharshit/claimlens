@@ -18,7 +18,24 @@ class IntakeHalt(ValueError):
     """Intake cannot continue (M2): missing or invalid data. The message says what to ask for.
 
     The workflow catches this, stops the claim, and runs no downstream agent (scenario 7).
+    ``reason`` is a ``HaltReason`` code when the cause is one of them.
     """
+
+    def __init__(self, message: str, *, reason: str | None = None):
+        super().__init__(message)
+        self.reason = reason
+
+
+_MONTHS = {m.lower(): i for i, m in enumerate(
+    ["January", "February", "March", "April", "May", "June", "July", "August", "September",
+     "October", "November", "December"], start=1)}
+_DATE = re.compile(r"\b(\d{1,2})\s+(" + "|".join(_MONTHS) + r")\s+(\d{4})\b", re.IGNORECASE)
+_ROOMS = ("single ac room", "single room", "twin-sharing room", "twin sharing room", "general ward",
+          "private room", "deluxe room", "suite")
+
+
+def _date(m: re.Match) -> str:
+    return f"{int(m.group(3)):04d}-{_MONTHS[m.group(2).lower()]:02d}-{int(m.group(1)):02d}"
 
 
 def extract_claim_fields(text: str) -> dict[str, Any]:
@@ -27,8 +44,57 @@ def extract_claim_fields(text: str) -> dict[str, Any]:
 
     M2: if policy id or claimed amount is missing, halt with a clear message
     rather than guessing (scenario 7).
+
+    Until the agent framework and model lane are chosen, this is the deterministic rule-based
+    extractor for the claim-message format in ``data/claims/*/claim.txt``. It stays as the
+    offline path (CI, tests, no API key) when the LLM path is added; both must return the same
+    ``ClaimIntake`` fields. Raises ``IntakeHalt`` (with ``.reason`` = a ``HaltReason``) when the
+    policy id or the claimed amount is missing.
     """
-    raise NotImplementedError("M1/M2 — Week 2 (needs framework + model lane)")
+    flat = " ".join(text.split())
+
+    policy = re.search(r"\bpolicy\s+([A-Z][A-Z0-9]*-\d{2})\b", flat)
+    if not policy:
+        raise IntakeHalt("policy id is missing — ask the claimant for the policy number",
+                         reason="missing_policy_id")
+    amount = re.search(r"(?:total\s+)?amount\s+claimed\s*:?\s*(?:Rs\.?|₹|INR)\s*([\d,]+)", flat, re.IGNORECASE)
+    if not amount:
+        raise IntakeHalt("claimed amount is missing — ask the claimant for the amount claimed and the final bill",
+                         reason="missing_claimed_amount")
+
+    # "Admitted on <date>"; otherwise the first date in the text ("injured on <date> and admitted the same day")
+    dates = list(_DATE.finditer(flat))
+    admit_m = re.search(r"admitted\s+on\s+" + _DATE.pattern, flat, re.IGNORECASE)   # same 3 groups as _DATE
+    discharge_m = re.search(r"discharged\s+on\s+" + _DATE.pattern, flat, re.IGNORECASE)
+    admit = _date(admit_m) if admit_m else (_date(dates[0]) if dates else None)
+    discharge = _date(discharge_m) if discharge_m else None
+
+    diag = re.search(r"diagnosed\s+(?:as|with)\s+(.+?)(?:\s+and\s+(?:underwent|managed|treated)|[;.,](?:\s|$))", flat, re.IGNORECASE)
+    if not diag:
+        diag = re.search(r"\b(?:admitted|underwent)\b.*?\b(?:with|for)\s+(?:an?\s+)?(.+?)[;.](?:\s|$)", flat, re.IGNORECASE)
+    procedure = re.search(r"\bunderwent\s+(.+?)[;.](?:\s|$)", flat, re.IGNORECASE)
+    diagnosis = diag.group(1).strip() if diag else "not stated"
+    if procedure and procedure.group(1).strip().lower() not in diagnosis.lower():
+        diagnosis = f"{diagnosis}; {procedure.group(1).strip()}"
+
+    lower = flat.lower()
+    room = next((r for r in _ROOMS if r in lower), "not stated")
+    patient = re.search(r"Patient:\s*([^.(]+?)\s*(?:\(synthetic\))?\.", flat)
+    holder = re.search(r"\bpolicyholder\s+([A-Z]{2}-\d{4})\b", flat)
+    bill = re.search(r"\bbill\s+number\s+([A-Z0-9]+(?:/[A-Z0-9]+)+)", flat, re.IGNORECASE)
+
+    return {
+        "policy_id": policy.group(1),
+        "policyholder_id": holder.group(1) if holder else None,
+        "patient": patient.group(1).strip() if patient else "not stated",
+        "admit": admit,
+        "discharge": discharge or admit,
+        "diagnosis": diagnosis,
+        "room_type": room,
+        "claimed": int(amount.group(1).replace(",", "")),
+        "bill_number": bill.group(1) if bill else None,
+        "accident": re.search(r"\baccident(?:al)?\b", lower) is not None,
+    }
 
 
 # Whole rupees, optionally with Indian or western comma grouping: 450, 1,500, 1,51,230.
@@ -127,9 +193,10 @@ def validate_policy(policy_id: str | None) -> dict[str, Any]:
     Returns that policy's limits (the ``PolicyLimits`` shape).
     """
     if not policy_id or not str(policy_id).strip():
-        raise IntakeHalt("policy id is missing — ask the claimant for the policy number")
+        raise IntakeHalt("policy id is missing — ask the claimant for the policy number", reason="missing_policy_id")
     policy_id = str(policy_id).strip().upper()
     policies = load_policies()
     if policy_id not in policies:
-        raise IntakeHalt(f"unknown policy id {policy_id} — check the policy number with the claimant")
+        raise IntakeHalt(f"unknown policy id {policy_id} — check the policy number with the claimant",
+                         reason="unknown_policy")
     return policies[policy_id]

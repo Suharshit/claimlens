@@ -111,5 +111,5 @@ The LB only serves the site after step 4, because Puppet owns its nginx config (
 ## Known limits
 
 - Servers install `requirements-server.txt` (no PyTorch/Chroma): fine for today's stubs; revisit when M3 retrieval lands.
-- The Nagios real-function check (scenario 1) is written but switched off until M7 — uncomment `nagios_functional_args` in `group_vars/all.yml`.
+- The Nagios real-function check (scenario 1) is on since M7 (`nagios_functional_args` in `group_vars/all.yml`); CI runs the same check against the lean install.
 - Terraform state is local to your WSL checkout; the S3 backend block in `main.tf` is ready if the project gets a second operator.
