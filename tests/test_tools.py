@@ -1,7 +1,7 @@
 """Test layer 1: unit tests on deterministic tools with exact rupee assertions.
 
-Targets (03-features-and-scope): score_risk, plus parse_bill (Week 1).
-Cost tools have their own file: tests/test_cost_tools.py. Replace each skip with real tests as the tool lands.
+Targets (03-features-and-scope): parse_bill and validate_policy. Cost and fraud tools have their
+own files: tests/test_cost_tools.py, tests/test_fraud_tools.py. Replace each skip with real tests as the tool lands.
 Use hand-worked numbers from data/policies.json — never values computed by the code under test.
 """
 
@@ -97,6 +97,4 @@ def test_validate_policy_halts(policy_id, message):
 # room_rent_deduction / compute_payable: see tests/test_cost_tools.py
 
 
-@pytest.mark.skip(reason="Week 2 — Member C: score_risk")
-def test_score_risk_reasons_and_threshold():
-    ...
+# score_risk: see tests/test_fraud_tools.py

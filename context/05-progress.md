@@ -12,6 +12,9 @@ This is the single source of truth for where the project stands. Read it at the 
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-05 | Fraud rules and weights live in config `fraud_rules`: admitted < 60 days after cover start 35 · claimed ≥ 80% of SI 25 · bill number already in `prior_claims.json` 40 · same-day discharge, not day care 20; capped at 100 | Scenario 5 = 35 + 40 = 75 ≥ 60; any single rule stays below 60; scenario 4 lists amount_near_sum_insured (25) without escalating on fraud |
+| 2026-11-05 | `check_waiting_period(start, admit, condition, *, limits, accident=False)`: 30-day wait (6.2.i), 48-month joint replacement (6.3.ii), 24-month specified conditions (6.3.i) matched by whole-word `condition_terms` in `policies.json`; accidents skip all of these; PED (6.1) not checked (no declared-PED data) | Scenario 3 rejects on `6.3.i`; scenario 5's accident on day 20 isn't excluded; terms are data, not code |
+| 2026-11-05 | `FraudSection` = `score`, `reasons` (`FraudReason` codes), `details` (one sentence each), `waiting_period` (`WaitingPeriodCheck`); `ClaimIntake.accident` added | The Manager needs the waiting-period result to reject; codes are testable, details readable |
 | 2026-11-04 | Cost order: IRDAI lists → room/ICU caps → proportionate cuts (exact `Fraction`s) → round each cut half-up → sub-limit → 5% co-pay on admissible (rounded half-up) → sum-insured cap. Rounding only in `compute_payable` (`_round`); rows ordered so `claimed − Σ deductions = payable` | One auditable path; the deduction table always adds up |
 | 2026-11-04 | `classify_items` reads Lists I–IV from `chunks.jsonl` and matches the normalised description exactly (also without its bracketed part; '/' or ',' alternatives only for unqualified entries); List I → `non_payable`, Lists II–IV billed separately → `subsumed`, both deducted in full | No accidental partial-word matches; the lists come from the same corpus the citations do |
 | 2026-11-04 | Room-cap cut is one row "Room + nursing (N days)" (taken from room first, then nursing); ICU capped separately (4.1.ii); if both exceed, the lower ratio applies to the other expenses | Matches the scenario tables; one ratio keeps note 2 unambiguous |
@@ -104,7 +107,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | In progress | 2026-11-04: `split_clauses`, `chunk_wording`, `build_index`, `load_chunks` done; 202 chunks in `chunks.jsonl`; search tools next (Week 2) |
 | M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
 | M5 | Over-claiming flag | A | Done | 2026-11-04 `overclaim_flag`; set in `compute_payable` from config margin |
-| M6 | Fraud risk score with reasons | C | Not started | |
+| M6 | Fraud risk score with reasons | C | Done | 2026-11-05 `lookup_prior_claims`, `find_bill_number`, `check_waiting_period`, `score_risk` in `tools/fraud_tools.py`; `tests/test_fraud_tools.py` |
 | M7 | Parallel fan-out + fan-in | C | Not started | Stub: `workflow.py` |
 | M8 | Four verdicts with payout + clause | C | Not started | |
 | M9 | Citation guard | B | Not started | |

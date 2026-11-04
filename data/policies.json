@@ -39,6 +39,108 @@
       "calculi in urinary system, gall bladder and bile duct",
       "varicose veins and varicose ulcers"
     ],
+    "condition_terms": {
+      "benign ENT disorders": [
+        "benign ent",
+        "deviated nasal septum",
+        "nasal polyp"
+      ],
+      "tonsillectomy": [
+        "tonsillectomy",
+        "tonsillitis"
+      ],
+      "adenoidectomy": [
+        "adenoidectomy",
+        "adenoid"
+      ],
+      "mastoidectomy": [
+        "mastoidectomy",
+        "mastoiditis"
+      ],
+      "tympanoplasty": [
+        "tympanoplasty"
+      ],
+      "hysterectomy": [
+        "hysterectomy"
+      ],
+      "benign tumours, cysts and polyps (incl. benign breast lumps)": [
+        "benign tumour",
+        "benign tumor",
+        "cyst",
+        "polyp",
+        "fibroadenoma",
+        "lipoma",
+        "breast lump"
+      ],
+      "benign prostate hypertrophy": [
+        "prostate hypertrophy",
+        "prostatic hyperplasia",
+        "bph"
+      ],
+      "cataract and age-related eye ailments": [
+        "cataract"
+      ],
+      "gastric or duodenal ulcer": [
+        "gastric ulcer",
+        "duodenal ulcer",
+        "peptic ulcer"
+      ],
+      "gout and rheumatism": [
+        "gout",
+        "rheumatism"
+      ],
+      "hernia of all types": [
+        "hernia",
+        "hernioplasty",
+        "herniorrhaphy"
+      ],
+      "hydrocele": [
+        "hydrocele"
+      ],
+      "non-infective arthritis": [
+        "non-infective arthritis",
+        "rheumatoid arthritis"
+      ],
+      "piles, fissures and fistula in anus": [
+        "piles",
+        "haemorrhoid",
+        "hemorrhoid",
+        "fissure",
+        "fistula"
+      ],
+      "pilonidal sinus, sinusitis and related disorders": [
+        "pilonidal",
+        "sinusitis"
+      ],
+      "prolapsed intervertebral disc and spinal diseases (unless accident)": [
+        "intervertebral disc",
+        "disc prolapse",
+        "slipped disc",
+        "spondylosis"
+      ],
+      "calculi in urinary system, gall bladder and bile duct": [
+        "calculi",
+        "calculus",
+        "kidney stone",
+        "renal stone",
+        "ureteric stone",
+        "gall stone",
+        "gallstone",
+        "cholelithiasis",
+        "choledocholithiasis"
+      ],
+      "varicose veins and varicose ulcers": [
+        "varicose"
+      ]
+    },
+    "joint_replacement_terms": [
+      "joint replacement",
+      "knee replacement",
+      "hip replacement",
+      "arthroplasty",
+      "osteoarthritis",
+      "osteoporosis"
+    ],
     "pre_hospitalisation_days": 30,
     "post_hospitalisation_days": 60,
     "clause_refs": {
