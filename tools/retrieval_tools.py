@@ -2,9 +2,9 @@
 
 Corpus: policy wordings + IRDAI excerpts in ``data/corpus/``, chunked by clause.
 Chunk metadata: policy_id, section, clause_id, page.
-Retrieval: hybrid BM25 (rank_bm25) + vector search (sentence-transformers, e.g.
-bge-small-en, in Chroma/FAISS). ALWAYS filter by policy_id so one policy's clause
-is never cited for another.
+Retrieval: BM25 (rank_bm25) over the committed ``chunks.jsonl``, scored 0–1 as the share of the
+query's IDF weight a clause contains; vectors (sentence-transformers) are an optional later add-on.
+ALWAYS filter by policy_id so one policy's clause is never cited for another.
 
 Limits come from ``policies.json`` (structured), never from retrieval, so the
 maths never depends on retrieval luck.
@@ -164,19 +164,108 @@ def load_chunks(policy_id: str | None = None) -> list[dict[str, Any]]:
 
 
 # --- Agent tools (Week 2 · Member B) ----------------------------------------
+#
+# Ranking: BM25 (rank_bm25) over one policy's chunks — the lean servers can't hold PyTorch, so
+# vectors are an optional add-on, not a dependency. Reported score: the share of the query's IDF
+# weight that the clause contains (0–1), so ``retrieval.min_similarity`` has a fixed meaning
+# whatever the corpus size. Only clauses at or above it are returned.
+
+_STOP = frozenset("""a an and any are as at be by for from has have if in into is it its of on or
+other per shall such that the their there these this to under up upon was were which will with
+within""".split())
+
+
+def tokenize(text: str) -> list[str]:
+    """Lower-case word tokens, stop words dropped, simple plural folding (charges → charge)."""
+    out = []
+    for tok in re.findall(r"[a-z0-9]+", text.lower()):
+        if tok in _STOP:
+            continue
+        if len(tok) > 3 and tok.endswith("es") and not tok.endswith("ses"):
+            tok = tok[:-1]
+        if len(tok) > 3 and tok.endswith("s") and not tok.endswith("ss"):
+            tok = tok[:-1]
+        out.append(tok)
+    return out
+
+
+class _Index:
+    """BM25 index over one policy's chunks plus the IDF table used for the 0–1 score."""
+
+    def __init__(self, chunks: list[dict[str, Any]]):
+        from rank_bm25 import BM25Okapi   # small; still imported lazily
+
+        self.chunks = chunks
+        self.docs = [tokenize(c["title"] + " " + c["text"]) for c in chunks]
+        self.bm25 = BM25Okapi(self.docs) if chunks else None
+        n = len(chunks)
+        df = Counter(t for d in self.docs for t in set(d))
+        self.idf = {t: __import__("math").log(1 + (n - f + 0.5) / (f + 0.5)) for t, f in df.items()}
+        self.sets = [set(d) for d in self.docs]
+
+    def search(self, query: str, k: int, min_score: float) -> list[dict[str, Any]]:
+        terms = list(dict.fromkeys(tokenize(query)))
+        if not self.bm25 or not terms:
+            return []
+        known = [t for t in terms if t in self.idf]
+        total = sum(self.idf.get(t, max(self.idf.values(), default=1.0)) for t in terms)
+        ranks = self.bm25.get_scores(terms)
+        hits = []
+        for i in sorted(range(len(self.chunks)), key=lambda i: (-ranks[i], i)):
+            if ranks[i] <= 0:
+                break
+            cover = sum(self.idf[t] for t in known if t in self.sets[i]) / total
+            if cover >= min_score:
+                c = self.chunks[i]
+                hits.append({"clause_id": c["clause_id"], "text": c["text"], "score": round(cover, 3),
+                             "page": c["page"], "title": c["title"]})
+            if len(hits) == k:
+                break
+        return hits
+
+
+_INDEXES: dict[str, _Index] = {}
+
+
+def _index(policy_id: str) -> _Index:
+    if policy_id not in _INDEXES:
+        _INDEXES[policy_id] = _Index(load_chunks(policy_id))
+    return _INDEXES[policy_id]
+
+
+def _retrieval_cfg(k: int | None) -> tuple[int, float]:
+    from tools.config import load_config
+
+    cfg = load_config()["retrieval"]
+    return (k or cfg["top_k"]), cfg["min_similarity"]
+
 
 def search_policy_clauses(policy_id: str, query: str, k: int | None = None) -> list[dict[str, Any]]:
     """Hybrid search over that policy's chunks; returns clause_id, text, score.
-    ``k`` defaults to config ``retrieval.top_k``."""
-    raise NotImplementedError("M3 — Week 2, Member B")
+    ``k`` defaults to config ``retrieval.top_k``.
+
+    Only ``policy_id``'s own chunks are searched (never another policy's), and only clauses scoring
+    at least ``retrieval.min_similarity`` come back — an empty list means "no grounding clause".
+    Each hit: ``clause_id``, ``text``, ``score`` (0–1), ``page``, ``title``.
+    """
+    if policy_id == "IRDAI":
+        raise ValueError("use search_irdai_rules for the IRDAI lists")
+    k, min_score = _retrieval_cfg(k)
+    return _index(policy_id).search(query, k, min_score)
 
 
 def get_policy_limits(policy_id: str) -> dict[str, Any]:
     """Structured limits from ``policies.json``: sum insured, room-rent and ICU caps,
     co-pay %, sub-limits, waiting periods."""
-    raise NotImplementedError("M3 — Week 2, Member B")
+    from tools.intake_tools import load_policies
+
+    policies = load_policies()
+    if policy_id not in policies:
+        raise KeyError(f"no limits for policy {policy_id} in policies.json")
+    return policies[policy_id]
 
 
-def search_irdai_rules(query: str) -> list[dict[str, Any]]:
+def search_irdai_rules(query: str, k: int | None = None) -> list[dict[str, Any]]:
     """Search IRDAI excerpts, e.g. the non-payable item lists."""
-    raise NotImplementedError("M3 — Week 2, Member B")
+    k, min_score = _retrieval_cfg(k)
+    return _index("IRDAI").search(query, k, min_score)
