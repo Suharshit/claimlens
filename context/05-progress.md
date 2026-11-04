@@ -6,12 +6,20 @@ This is the single source of truth for where the project stands. Read it at the 
 - **Phase:** Week 1 tasks — build starting (calendar: end of Week 2, about two weeks behind plan)
 - **Current week:** Week 2 by calendar; Week 1 tasks still to do
 - **Last updated:** 2026-11-04
-- **Next action:** Merge `feat/m12-m13-state-log`. Then the rest of Week 1: `tools/schemas.py` fields (+ make `write_state` validate sections), `policies.json` (ASJ-01), `parse_bill`, scenario 1–2 claims. Settle the framework question before Week 2 agent work.
+- **Next action:** Merge `feat/m1-schemas-data`. Then the last Week 1 items: download the ASJ wording PDF + IRDAI List I into `data/corpus/` and check the `policies.json` numbers and section ids against it; `prior_claims.json`; scenario 3–7 claims. Settle the framework question before Week 2 agent work.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-04 | `write_state` validates each section against `tools.schemas.SECTION_MODELS` and the whole record against `ClaimState`; models forbid unknown fields; money fields are strict `int` (floats/strings refused) | Bad data fails at the write, naming the field, instead of surfacing later as a wrong payout |
+| 2026-11-04 | `ClaimIntake` gains optional `policyholder_id` and `bill_number` | Fraud Signal needs them for prior-claim lookup and the duplicate-bill rule (scenario 5) |
+| 2026-11-04 | `policies.json` shape: `waiting_periods` in months (`initial_days` in days), plus `name`, `source`, `specific_conditions`, `pre/post_hospitalisation_days`, `clause_refs`; documented in `data/README.md` | Wordings state waits in months; `clause_refs` tells Cost/Manager which clause id to cite for each limit |
+| 2026-11-04 | ASJ-01 limits: SI ₹5,00,000; room 2% of SI max ₹5,000/day; ICU 5% max ₹10,000/day; co-pay 5%; cataract min(25% SI, ₹40,000)/eye; modern treatments 50% SI; waits 30 days / 24 months specified / 36 months PED and joint replacement (Oct 2024 revision); pre 30 / post 60 days | Standard Arogya Sanjeevani terms; section ids (`ASJ-01:5.a.i`, `5.note.ii`, `10.e` …) taken from the Acko-filed wording, to be checked once the PDF is chunked |
+| 2026-11-04 | Proportionate room-rent deduction applies only to associated expenses (room-linked: nursing, professional, OT); not to pharmacy, diagnostics, consumables or implants | IRDAI standardisation rule; drives scenario 2's expected payout |
+| 2026-11-04 | Co-pay (5%) is applied after non-payable and room-rent deductions, on the admissible amount; it appears as its own deduction row | Matches ASJ wording ("on every admissible claim"); scenario 1's payout therefore = claimed − non-payables − 5% co-pay, slightly refining the 03 wording |
+| 2026-11-04 | `parse_bill` accepts CSV or JSON, whole rupees only (`1,51,230` and `₹` allowed, paise refused), and raises `IntakeHalt` naming file + row; `IntakeHalt(ValueError)` lives in `tools/intake_tools.py` | M2: intake stops with a clear message; rounding stays only in `compute_payable` |
+| 2026-11-04 | Each `expected.json` carries the hand calculation (`working`) and the deduction table; `tests/test_data.py` checks it adds up | Expected values are worked by hand, never produced by the code under test; doubles as viva evidence |
 | 2026-11-04 | `write_state(claim_id, section, data, *, agent=None)`: optional `agent` is checked against `SECTION_OWNERS` (non-owner → `PermissionError`); first write creates the record; writes are atomic (temp file + `os.replace`) under a lock | Enforces "each agent writes only its own section" and keeps parallel Policy/Fraud writes from losing updates |
 | 2026-11-04 | Added `set_status(claim_id, status, *, agent)` and `new_state` / `state_path` in `tools/state.py`, and `read_log(claim_id=None)` / `utc_now()` in `tools/logger.py` | `status` isn't an agent section, so it needs its own logged write; tests and trace views need to read the log |
 | 2026-11-04 | Each write is recorded twice: a line in `logs/run_log.jsonl` and an entry in the record's `trace` (same `ts`) | Log test needs every agent in each trace; demo can show the trace from the record alone |
@@ -42,7 +50,8 @@ This is the single source of truth for where the project stands. Read it at the 
 - [ ] Framework: Microsoft Agent Framework or Semantic Kernel? Pin version. (Needed by Week 2, when agents get built.)
 - [ ] Which 3–4 policy wordings to use (start with Arogya Sanjeevani standard wording).
 - [ ] Which model lane / API key the team will use (fill `.env` from `.env.example`).
-- [ ] Agree the shapes of `policies.json` and `data/claims/` (suggestions in `data/README.md`).
+- [x] Shapes of `policies.json` and `data/claims/` agreed (2026-11-04, `data/README.md`).
+- [ ] Check ASJ-01 section ids and the 24-month specified-condition list against the actual wording PDF once it's in `data/corpus/` (currently from the Acko prospectus).
 - [ ] Commit the source policy PDFs or only the chunked text? (PDFs are git-ignored for now.)
 - [ ] (DevOps) When M3 lands, how does retrieval run on the lean servers: BM25-only, a prebuilt index, or bigger app instances? Keep heavy imports (`sentence_transformers`, `chromadb`) inside functions so `api.py` still imports on servers.
 - [ ] (DevOps) INT333 demo date (deadline TBD in `pipeline.config.yml`).
@@ -72,8 +81,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
 | — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged to `main` 2026-11-04; next: first release, `make up` on AWS |
-| M1 | Claim intake → structured record | A | Not started | Stubs: `tools/schemas.py`, `tools/intake_tools.py` |
-| M2 | Halt on missing policy id / amount | A | Not started | |
+| M1 | Claim intake → structured record | A | In progress | 2026-11-04: `tools/schemas.py` filled, `parse_bill`, `validate_policy`, `load_policies` done + tested; `extract_claim_fields` (LLM) waits for the framework |
+| M2 | Halt on missing policy id / amount | A | In progress | `IntakeHalt` raised for missing/unknown policy and bad bills; missing-amount halt comes with `extract_claim_fields` |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Not started | Stubs: `tools/retrieval_tools.py` |
 | M4 | Deterministic payable calculation | A | Not started | |
 | M5 | Over-claiming flag | A | Not started | |
@@ -110,6 +119,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-04** · Suharshit · M12/M13 PR #2 merged. Branch `feat/m1-schemas-data`: filled `tools/schemas.py` (all sections + `PolicyLimits`, `ExpectedOutcome`), `write_state` now validates sections and the whole record; `parse_bill`, `validate_policy`, `load_policies`, `IntakeHalt`; `data/policies.json` (ASJ-01, from the standard wording); scenario claims CLM-0001 (approve, ₹79,610) and CLM-0002 (partial, ₹56,145) with hand-worked `expected.json`; `tests/test_data.py`. pytest 95 passed / 11 skipped, ruff clean. · Next: merge; corpus PDFs + verify section ids; `prior_claims.json`; scenarios 3–7.
 
 - **2026-11-04** · Suharshit · DevOps PR #1 merged. Built M12 (`tools/state.py`: `read_state`, `write_state` with section ownership, atomic locked writes, `set_status`, per-record trace) and M13 (`tools/logger.py`: append-only `append_log`, `read_log`). 25 new tests incl. parallel Policy/Fraud writes; pytest 57 passed / 12 skipped, ruff clean. · Next: merge `feat/m12-m13-state-log`; then `tools/schemas.py`, `policies.json`, `parse_bill`, scenario 1–2 claims.
 
