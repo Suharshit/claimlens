@@ -6,17 +6,25 @@ This is the single source of truth for where the project stands. Read it at the 
 - **Phase:** Week 1 tasks — build starting (calendar: end of Week 2, about two weeks behind plan)
 - **Current week:** Week 2 by calendar; Week 1 tasks still to do
 - **Last updated:** 2026-11-04
-- **Next action:** Merge `feat/m1-schemas-data`. Then the last Week 1 items: download the ASJ wording PDF + IRDAI List I into `data/corpus/` and check the `policies.json` numbers and section ids against it; `prior_claims.json`; scenario 3–7 claims. Settle the framework question before Week 2 agent work.
+- **Next action:** Merge `feat/data-scenarios-3-7`. Download the IFFCO ASJ wording PDF to `data/corpus/policies/ASJ-01/wording.pdf` (see `data/corpus/SOURCES.md`), then branch `feat/m3-chunking`: `chunk_wording` + `build_index`, and check every clause id against the PDF. Settle the framework question before Week 2 agent work.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-04 | ASJ-01 corpus document = IFFCO Tokio Arogya Sanjeevani wording (UIN IFFHLIP20161V011920); clause ids re-keyed to its numbering: room `4.1.i`, ICU `4.1.ii`, proportionate `4.1.note2`, cataract `4.3`, modern `4.6`, PED `6.1`, 30-day `6.2`, specified `6.3.i`, joint `6.3.ii`, co-pay `9.3`; List I (its Annexure-A) stays `IRDAI:List-I`. Joint replacement wait 48 months per this wording | A full policy wording (not a prospectus), current 36-month PED, List I in the same PDF; supersedes the Acko numbering |
+| 2026-11-04 | Proportionate room-rent deduction follows the wording (4.1 note 2): every other expense except medicines is cut. Scenario 2 payable is now ₹52,725 (was ₹56,145) | Every rule stays citable from one PDF; supersedes the IRDAI-wide exemption decision below |
+| 2026-11-04 | Synthetic policy `GHC-01` in `policies.json` with no wording in the corpus | Gives scenario 6 a valid policy whose retrieval finds no grounding clause |
+| 2026-11-04 | Shared reason codes in `tools/schemas.py`: `EscalationReason` (high_value, fraud_risk, no_grounding, low_confidence, citation_failed), `FraudReason` (soon_after_inception, amount_near_sum_insured, duplicate_bill_number, short_stay_non_daycare), `HaltReason` (missing_policy_id, unknown_policy, missing_claimed_amount) | M6/M10/M2 code and the scenario tests check the same codes, not free text |
+| 2026-11-04 | `ExpectedOutcome` gains escalation/fraud reasons, `fraud_min_score`, `human_verdict`, `final_status`, `halt`; a halted claim has no verdict, amounts or bill | Scenarios 4–7 need these to be testable end to end |
+| 2026-11-04 | Over-claim flag (M5) only when payable > 0 | A rejection (scenario 3) isn't over-claiming |
+| 2026-11-04 | One `inception_date` per policy in `policies.json` stands for the scenario policyholders' cover start (2026-01-01) | Enough for the waiting-period and soon-after-inception rules; per-policyholder dates only if needed later |
+| 2026-11-04 | `prior_claims.json`: 36 synthetic claims (seeded); PC-0017 holds bill `CGH/25/07731`, reused by scenario 5; no other scenario bill number appears | Gives the duplicate-bill rule exactly one true hit |
 | 2026-11-04 | `write_state` validates each section against `tools.schemas.SECTION_MODELS` and the whole record against `ClaimState`; models forbid unknown fields; money fields are strict `int` (floats/strings refused) | Bad data fails at the write, naming the field, instead of surfacing later as a wrong payout |
 | 2026-11-04 | `ClaimIntake` gains optional `policyholder_id` and `bill_number` | Fraud Signal needs them for prior-claim lookup and the duplicate-bill rule (scenario 5) |
 | 2026-11-04 | `policies.json` shape: `waiting_periods` in months (`initial_days` in days), plus `name`, `source`, `specific_conditions`, `pre/post_hospitalisation_days`, `clause_refs`; documented in `data/README.md` | Wordings state waits in months; `clause_refs` tells Cost/Manager which clause id to cite for each limit |
-| 2026-11-04 | ASJ-01 limits: SI ₹5,00,000; room 2% of SI max ₹5,000/day; ICU 5% max ₹10,000/day; co-pay 5%; cataract min(25% SI, ₹40,000)/eye; modern treatments 50% SI; waits 30 days / 24 months specified / 36 months PED and joint replacement (Oct 2024 revision); pre 30 / post 60 days | Standard Arogya Sanjeevani terms; section ids (`ASJ-01:5.a.i`, `5.note.ii`, `10.e` …) taken from the Acko-filed wording, to be checked once the PDF is chunked |
-| 2026-11-04 | Proportionate room-rent deduction applies only to associated expenses (room-linked: nursing, professional, OT); not to pharmacy, diagnostics, consumables or implants | IRDAI standardisation rule; drives scenario 2's expected payout |
+| 2026-11-04 | ASJ-01 limits: SI ₹5,00,000; room 2% of SI max ₹5,000/day; ICU 5% max ₹10,000/day; co-pay 5%; cataract min(25% SI, ₹40,000)/eye; modern treatments 50% SI; waits 30 days / 24 months specified / 36 months PED; pre 30 / post 60 days | Standard Arogya Sanjeevani terms (section ids and joint-replacement wait since re-keyed to the IFFCO wording, above) |
+| 2026-11-04 | ~~Proportionate deduction exempts pharmacy, diagnostics, consumables and implants (IRDAI rule)~~ — superseded the same day by the wording rule above | — |
 | 2026-11-04 | Co-pay (5%) is applied after non-payable and room-rent deductions, on the admissible amount; it appears as its own deduction row | Matches ASJ wording ("on every admissible claim"); scenario 1's payout therefore = claimed − non-payables − 5% co-pay, slightly refining the 03 wording |
 | 2026-11-04 | `parse_bill` accepts CSV or JSON, whole rupees only (`1,51,230` and `₹` allowed, paise refused), and raises `IntakeHalt` naming file + row; `IntakeHalt(ValueError)` lives in `tools/intake_tools.py` | M2: intake stops with a clear message; rounding stays only in `compute_payable` |
 | 2026-11-04 | Each `expected.json` carries the hand calculation (`working`) and the deduction table; `tests/test_data.py` checks it adds up | Expected values are worked by hand, never produced by the code under test; doubles as viva evidence |
@@ -48,10 +56,10 @@ This is the single source of truth for where the project stands. Read it at the 
 - [x] Team size: solo (2026-11-04).
 - [ ] Solo scope: keep all seven agents, or drop the Grievance Drafter (S2 only)? The Human Review Desk stays, because M11 is a must-have.
 - [ ] Framework: Microsoft Agent Framework or Semantic Kernel? Pin version. (Needed by Week 2, when agents get built.)
-- [ ] Which 3–4 policy wordings to use (start with Arogya Sanjeevani standard wording).
+- [ ] Which other 2–3 policy wordings to add (ASJ-01 = IFFCO Tokio wording, decided 2026-11-04). Scenarios only need ASJ-01 + GHC-01.
 - [ ] Which model lane / API key the team will use (fill `.env` from `.env.example`).
 - [x] Shapes of `policies.json` and `data/claims/` agreed (2026-11-04, `data/README.md`).
-- [ ] Check ASJ-01 section ids and the 24-month specified-condition list against the actual wording PDF once it's in `data/corpus/` (currently from the Acko prospectus).
+- [ ] Download the IFFCO wording PDF (build machines get 403) and check every clause id in `data/corpus/SOURCES.md` against it — ids so far are from reading the PDF online.
 - [ ] Commit the source policy PDFs or only the chunked text? (PDFs are git-ignored for now.)
 - [ ] (DevOps) When M3 lands, how does retrieval run on the lean servers: BM25-only, a prebuilt index, or bigger app instances? Keep heavy imports (`sentence_transformers`, `chromadb`) inside functions so `api.py` still imports on servers.
 - [ ] (DevOps) INT333 demo date (deadline TBD in `pipeline.config.yml`).
@@ -95,7 +103,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M12 | Shared claim-state record | C | Done | 2026-11-04 `tools/state.py`, tests in `tests/test_state_log.py` (branch `feat/m12-m13-state-log`) |
 | M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Not started | |
-| M15 | Test file (≥ 3 scenarios; plan 7) | A | Not started | Skipped placeholders in `tests/test_scenarios.py` |
+| M15 | Test file (≥ 3 scenarios; plan 7) | A | In progress | All 7 scenario claims + hand-worked `expected.json` ready (CLM-0001…0007); `tests/test_scenarios.py` still skipped until M7 |
 | S1 | Deduction table in output | A | Not started | |
 | S2 | Grievance letter draft | — | Not started | |
 | S3 | Missing-document check | — | Not started | |
@@ -119,6 +127,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-04** · Suharshit · PR #3 merged. Chose the IFFCO Tokio wording for ASJ-01 and the wording's medicines-only proportionate rule; re-keyed clause ids, recomputed scenario 2 (₹52,725). Branch `feat/data-scenarios-3-7`: claims CLM-0003…0007 (reject ₹0; escalate→human ₹4,26,550; fraud ₹94,050; no-grounding GHC-01 ₹42,000; halt), `prior_claims.json` (36), `data/corpus/SOURCES.md`, reason-code types, richer `ExpectedOutcome`, `PriorClaim`; `tests/test_data.py` extended. pytest 120 passed / 11 skipped, ruff clean. PDF download blocked on both build machines (403). · Next: merge; download the wording PDF; `feat/m3-chunking`.
 
 - **2026-11-04** · Suharshit · M12/M13 PR #2 merged. Branch `feat/m1-schemas-data`: filled `tools/schemas.py` (all sections + `PolicyLimits`, `ExpectedOutcome`), `write_state` now validates sections and the whole record; `parse_bill`, `validate_policy`, `load_policies`, `IntakeHalt`; `data/policies.json` (ASJ-01, from the standard wording); scenario claims CLM-0001 (approve, ₹79,610) and CLM-0002 (partial, ₹56,145) with hand-worked `expected.json`; `tests/test_data.py`. pytest 95 passed / 11 skipped, ruff clean. · Next: merge; corpus PDFs + verify section ids; `prior_claims.json`; scenarios 3–7.
 
