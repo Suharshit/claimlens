@@ -16,6 +16,15 @@ thresholds:
   min_confidence: 0.6               # manager confidence below this escalates
   overclaim_margin_pct: 10          # M5: claimed > payable by this margin → over-claiming flag
 
+fraud_rules:                        # M6 score_risk: weighted rules, score capped at 100
+  soon_after_inception_days: 60     # admission within this many days of cover start
+  near_sum_insured_pct: 80          # claimed at or above this % of sum insured
+  weights:
+    soon_after_inception: 35
+    amount_near_sum_insured: 25
+    duplicate_bill_number: 40
+    short_stay_non_daycare: 20      # admit and discharge on the same day (< 24 h), not a day-care procedure
+
 paths:
   corpus: data/corpus
   chunks: data/corpus/chunks.jsonl

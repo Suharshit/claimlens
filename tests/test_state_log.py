@@ -84,7 +84,7 @@ def test_read_log_filters_by_claim(tmp_paths):
 INTAKE = {"policy_id": "ASJ-01", "patient": "Test Patient", "admit": "2026-09-02",
           "discharge": "2026-09-05", "diagnosis": "appendicitis", "room_type": "single", "claimed": 85000}
 # Optional intake fields are filled with None once validated.
-INTAKE_STORED = {**INTAKE, "policyholder_id": None, "bill_number": None}
+INTAKE_STORED = {**INTAKE, "policyholder_id": None, "bill_number": None, "accident": False}
 
 
 def test_first_write_creates_record_in_brief_shape(tmp_paths):
@@ -100,7 +100,7 @@ def test_first_write_creates_record_in_brief_shape(tmp_paths):
 
 def test_write_touches_only_its_own_section(tmp_paths):
     state.write_state("CLM-0001", "intake", INTAKE)
-    state.write_state("CLM-0001", "fraud", {"score": 22, "reasons": ["soon after inception"]})
+    state.write_state("CLM-0001", "fraud", {"score": 22, "reasons": ["soon_after_inception"]})
     record = state.read_state("CLM-0001")
     assert record["intake"] == INTAKE_STORED
     assert record["fraud"]["score"] == 22
@@ -156,14 +156,15 @@ def test_pydantic_models_are_accepted(tmp_paths):
         score: int
         reasons: list[str]
 
-    state.write_state("CLM-0001", "fraud", Fraud(score=65, reasons=["duplicate bill number"]))
-    assert state.read_state("CLM-0001")["fraud"] == {"score": 65, "reasons": ["duplicate bill number"]}
+    state.write_state("CLM-0001", "fraud", Fraud(score=65, reasons=["duplicate_bill_number"]))
+    assert state.read_state("CLM-0001")["fraud"] == {
+        "score": 65, "reasons": ["duplicate_bill_number"], "details": [], "waiting_period": None}
 
 
 def test_caller_mutation_does_not_leak_into_record(tmp_paths):
     data = {"score": 10, "reasons": []}
     state.write_state("CLM-0001", "fraud", data)
-    data["reasons"].append("added later")
+    data["reasons"].append("short_stay_non_daycare")
     assert state.read_state("CLM-0001")["fraud"]["reasons"] == []
 
 
@@ -201,7 +202,7 @@ def test_parallel_policy_and_fraud_writes_both_survive(tmp_paths):
     assert errors == []
     record = state.read_state("CLM-0001")
     assert record["policy"]["clauses"][0]["score"] == 0.24
-    assert record["fraud"] == {"score": 24, "reasons": []}
+    assert record["fraud"] == {"score": 24, "reasons": [], "details": [], "waiting_period": None}
     assert len(record["trace"]) == 51
     assert len(logger.read_log("CLM-0001")) == 51
     assert list(tmp_paths["state_dir"].glob("*.tmp")) == []  # no temp files left behind

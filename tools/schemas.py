@@ -69,6 +69,7 @@ class ClaimIntake(_Model):
     room_type: str = Field(min_length=1)
     claimed: Rupees
     bill_number: str | None = None       # Fraud Signal: duplicate bill check (scenario 5)
+    accident: bool = False               # accidents skip the 30-day and specified-condition waits (6.2.i, 6.3)
 
     @model_validator(mode="after")
     def _discharge_not_before_admit(self) -> ClaimIntake:
@@ -107,6 +108,9 @@ class PolicyLimits(_Model):
     sub_limits: dict[str, Rupees] = Field(default_factory=dict)
     waiting_periods: WaitingPeriods
     specific_conditions: list[str] = Field(default_factory=list)
+    condition_terms: dict[str, list[str]] = Field(default_factory=dict)
+    """Lower-case words that identify each ``specific_conditions`` entry in a diagnosis."""
+    joint_replacement_terms: list[str] = Field(default_factory=list)
     pre_hospitalisation_days: Annotated[int, Field(ge=0)] = 0
     post_hospitalisation_days: Annotated[int, Field(ge=0)] = 0
     clause_refs: dict[str, ClauseId] = Field(default_factory=dict)
@@ -127,10 +131,22 @@ class PolicySection(_Model):
 
 # ---- fraud ----
 
+class WaitingPeriodCheck(_Model):
+    """Result of ``check_waiting_period``: is the admission inside a waiting period?"""
+    excluded: bool
+    rule: Literal["initial", "specific_conditions", "joint_replacement"] | None = None
+    condition: str | None = None         # the policy's wording of the matched condition
+    clause_id: ClauseId | None = None
+    waiting_ends: date | None = None
+    accident: bool = False
+
+
 class FraudSection(_Model):
     """``fraud`` section. Written by the Fraud Signal Agent."""
     score: Annotated[int, Field(strict=True, ge=0, le=100)]
-    reasons: list[str] = Field(default_factory=list)
+    reasons: list[FraudReason] = Field(default_factory=list)
+    details: list[str] = Field(default_factory=list)          # one plain sentence per reason
+    waiting_period: WaitingPeriodCheck | None = None
 
 
 # ---- cost ----
