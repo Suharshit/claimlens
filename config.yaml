@@ -18,6 +18,7 @@ thresholds:
 
 paths:
   corpus: data/corpus
+  chunks: data/corpus/chunks.jsonl
   claims: data/claims
   policies: data/policies.json
   prior_claims: data/prior_claims.json
