@@ -119,6 +119,17 @@ def test_api_runs_a_claim_end_to_end(tmp_path, monkeypatch):
     assert body["disclaimer"] == DISCLAIMER
 
 
-def test_workflow_is_importable_without_running():
+def test_workflow_is_a_microsoft_agent_framework_graph():
     import workflow
+    from agent_framework import Workflow
+    wf = workflow.build_workflow()
+    assert isinstance(wf, Workflow)
+    edges = {(e.source_id, e.target_id) for group in wf.edge_groups for e in group.edges
+             if not e.source_id.startswith("internal:")}
+    kinds = [type(g).__name__ for g in wf.edge_groups]
+    assert kinds.count("FanOutEdgeGroup") == 2 and kinds.count("FanInEdgeGroup") == 1
+    assert {("intake", "policy_limits"), ("intake", "fraud"),            # fan-out after intake
+            ("policy_limits", "policy_retrieve"), ("policy_limits", "cost"),   # Cost waits for limits
+            ("policy_retrieve", "manager"), ("cost", "manager"), ("fraud", "manager"),   # fan-in
+            ("manager", "human_desk")} == edges
     assert asyncio.iscoroutinefunction(workflow.run_claim)

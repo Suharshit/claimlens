@@ -31,8 +31,7 @@ the presentation — no missing features.
 | #10 | M7 agents + fan-out / fan-in workflow; Nagios + CI functional check on |
 | #11 | M14 demo notebook, submission README, `architecture.png` |
 | #13 | this handoff (`HANDOFF.md`) |
-
-**Waiting for you:** PR #12, *"Decision: move the workflow onto Microsoft Agent Framework"* — CI green, not merged.
+| #12 | Workflow on Microsoft Agent Framework (framework decision) |
 
 ## What only you can do (in order)
 
@@ -50,33 +49,25 @@ python -m pytest -q                        # expect 266 passed, 0–1 skipped
 Your downloaded `data/corpus/policies/ASJ-01/wording.pdf` stays (it's git-ignored); with it present the
 rebuild test runs too.
 
-### 2. Decide the framework — merge or close PR #12 (10 min)
+### 2. Framework — done ✅
 
-The submission requires Microsoft Agent Framework **or** Semantic Kernel. `main` currently runs the same
-graph on plain `asyncio`, so this box is **not ticked until PR #12 is merged**.
-
-- **Recommended: merge PR #12.** Microsoft Agent Framework is the successor to Semantic Kernel (1.0 GA
-  April 2026, now 1.24). Its workflow fan-out / fan-in edges match our graph one to one, and the core
-  package has no model-SDK or PyTorch dependencies, so it also runs on the 1 GB servers (checked).
-  Agents and tools don't change; only `workflow.py` and the requirements do.
-  Merge on GitHub ("Squash and merge"), then `git pull` and `pip install -r requirements.txt`.
-- If you'd rather use Semantic Kernel: close PR #12 and tell Claude — the agents' `run_sync` bodies drop
-  into SK the same way.
+Decided 5 Nov: **Microsoft Agent Framework** (`agent-framework-core==1.24.0`), merged as PR #12. `workflow.py`
+is a `WorkflowBuilder` graph with fan-out / fan-in edge groups; agents and tools are unchanged. After
+`git pull`, run `pip install -r requirements.txt` to get the package.
 
 ### 3. GitHub housekeeping (10 min) — Claude's session can't delete branches or change settings
 
 1. Settings → General → tick **Automatically delete head branches**.
 2. Delete the merged branches (Branches page, or):
    ```powershell
-   git push origin --delete feat/m3-search feat/m6-fraud-tools feat/m7-workflow feat/m8-m11-decision-tools feat/m14-demo-docs
+   git push origin --delete feat/m3-search feat/m6-fraud-tools feat/m7-workflow feat/m8-m11-decision-tools feat/m14-demo-docs docs/handoff feat/maf-workflow
    ```
-   (Delete `feat/maf-workflow` after you merge or close PR #12.)
 3. Settings → Branches → add a rule for `main`: require a pull request and the status checks
    **App — lint, test (py3.11)**, **App — lint, test (py3.12)**, **Server install — lean deps, health, Nagios plugin**, **Infra — validate**.
 
 ### 4. INT333: first release + AWS deploy (½ day) — needs your AWS account
 
-Do this **after** step 2, so the release contains the framework you chose.
+The framework is merged, so the release will contain it.
 
 ```powershell
 make release VERSION=v0.1.0      # pushes the tag; the release workflow builds and publishes claimlens.tar.gz
