@@ -18,6 +18,6 @@ nagios_enabled: true
 ops_private_ip: "{{ hostvars[groups['ops'][0]]['private_ip'] if groups.get('ops') else '' }}"
 
 # Nagios real-function check (S8): run scenario 1 end to end and expect a verdict.
-# Switch on once M7 works (until then the route returns 501). Each check is a full
-# multi-agent run with model calls, so it runs every 30 minutes, not every 5.
-# nagios_functional_args: "--path /claims/CLM-0001/run --method POST --expect-text verdict -w 10 -c 30 -t 60"
+# On since M7 (2026-11-05). Today the run is deterministic and takes under a second;
+# once intake uses the LLM each check makes model calls, so it stays at every 30 minutes.
+nagios_functional_args: "--path /claims/CLM-0001/run --method POST --expect-text verdict -w 10 -c 30 -t 60"

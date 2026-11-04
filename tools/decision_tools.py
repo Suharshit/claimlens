@@ -61,6 +61,8 @@ def apply_decision_rules(state: dict[str, Any]) -> dict[str, Any]:
 
     Escalate when: claimed > human_review_amount_inr; fraud score >= fraud_escalate_score;
     no clause above min_similarity; citation guard fails; confidence < min_confidence.
+    "No grounding" means no clause from the claim's own policy wording was retrieved — the IRDAI
+    lists apply to every policy, so they alone don't ground a decision (scenario 6).
 
     Base verdict: ``reject`` if the Fraud agent's waiting-period check excluded the admission
     (payout 0, the waiting clause cited); ``partial`` if any deduction goes beyond the routine
@@ -75,6 +77,7 @@ def apply_decision_rules(state: dict[str, Any]) -> dict[str, Any]:
     fraud = state.get("fraud") or {}
     limits = policy.get("limits") or {}
     retrieved = {c["clause_id"]: c["score"] for c in policy.get("clauses", [])}
+    own = [c for c in retrieved if c.startswith(f"{intake['policy_id']}:")]   # the policy's own wording
     claimed = intake["claimed"]
 
     wait = fraud.get("waiting_period") or {}
@@ -97,7 +100,7 @@ def apply_decision_rules(state: dict[str, Any]) -> dict[str, Any]:
         reasons.append("high_value")
     if fraud.get("score", 0) >= cfg["fraud_escalate_score"]:
         reasons.append("fraud_risk")
-    if not retrieved:
+    if not own:
         reasons.append("no_grounding")
         cited, confidence = [], 0.0
     else:

@@ -47,7 +47,7 @@ FraudReason = Literal[
 ]
 """Reason codes ``score_risk`` emits (M6), one per rule in 02-architecture-brief."""
 
-HaltReason = Literal["missing_policy_id", "unknown_policy", "missing_claimed_amount"]
+HaltReason = Literal["missing_policy_id", "unknown_policy", "missing_claimed_amount", "missing_bill", "invalid_bill"]
 """Why intake stops (M2). No downstream agent runs."""
 
 
@@ -196,6 +196,12 @@ class Letter(_Model):
 
 # ---- whole record ----
 
+class HaltInfo(_Model):
+    """Why intake stopped (M2). Set by ``tools.state.set_halt``; no downstream agent runs."""
+    reason: HaltReason
+    message: str
+
+
 class ClaimState(_Model):
     """The whole ``state/<claim_id>.json`` record."""
     claim_id: ClaimId
@@ -208,6 +214,7 @@ class ClaimState(_Model):
     decision: DecisionSection | None = None
     human: HumanSection = Field(default_factory=HumanSection)
     letters: list[Letter] | None = None
+    halt: HaltInfo | None = None
     trace: list[dict[str, Any]] = Field(default_factory=list)
 
 

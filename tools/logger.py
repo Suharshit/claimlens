@@ -59,3 +59,8 @@ def read_log(claim_id: str | None = None) -> list[dict[str, Any]]:
     if claim_id is not None:
         events = [e for e in events if e.get("claim_id") == claim_id]
     return events
+
+
+def log_step(claim_id: str, agent: str, tool: str, summary: str, **extra: Any) -> None:
+    """One trace line for a tool call or agent step (agents call this for every tool they use)."""
+    append_log({"claim_id": claim_id, "agent": agent, "tool": tool, "summary": summary, **extra})

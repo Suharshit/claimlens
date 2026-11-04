@@ -67,6 +67,7 @@ def new_state(claim_id: str) -> dict[str, Any]:
     for section in SECTIONS:
         record[section] = [] if section == "bill_items" else None
     record["human"] = {"ticket": None, "reviewer": None, "verdict": None, "note": None, "payout": None}
+    record["halt"] = None
     record["trace"] = []
     return record
 
@@ -167,4 +168,32 @@ def set_status(claim_id: str, status: str, *, agent: str) -> dict[str, Any]:
             "ts": ts, "claim_id": claim_id, "agent": agent, "tool": "set_status",
             "summary": f"status {old} -> {status}",
         })
+    return record
+
+
+def reset_state(claim_id: str, *, agent: str = "workflow") -> dict[str, Any]:
+    """Start a claim afresh (a re-run): replace its record with ``new_state``. Logged; the run log keeps history."""
+    with _LOCK:
+        record = new_state(claim_id)
+        ts = utc_now()
+        record["trace"].append({"ts": ts, "agent": agent, "action": "reset"})
+        _save(claim_id, record)
+        append_log({"ts": ts, "claim_id": claim_id, "agent": agent, "tool": "reset_state",
+                    "summary": "record reset for a new run"})
+    return record
+
+
+def set_halt(claim_id: str, reason: str, message: str, *, agent: str) -> dict[str, Any]:
+    """Record that intake stopped (M2): ``halt`` = {reason, message}; status stays ``intake``."""
+    with _LOCK:
+        try:
+            record = read_state(claim_id)
+        except FileNotFoundError:
+            record = new_state(claim_id)
+        ts = utc_now()
+        record["halt"] = {"reason": reason, "message": message}
+        record["trace"].append({"ts": ts, "agent": agent, "action": "halt", "reason": reason})
+        _save(claim_id, record)
+        append_log({"ts": ts, "claim_id": claim_id, "agent": agent, "tool": "set_halt",
+                    "summary": f"halted: {message}"})
     return record

@@ -95,15 +95,16 @@ def test_threshold_edges():
 
 
 def test_scenario_6_shape_no_grounding_never_auto_decides():
+    # IRDAI List I was retrieved, but nothing from GHC-01's own wording → still no grounding
     d = apply_decision_rules(record(claimed=42000, deductions=[], payable=42000,
-                                    retrieved={}, limits=load_policies()["GHC-01"]))
+                                    retrieved={"IRDAI:List-I": 1.0}, limits=load_policies()["GHC-01"]))
     assert (d["verdict"], d["escalation_reasons"], d["clauses"], d["confidence"]) == (
         "escalate", ["no_grounding"], [], 0.0)
     assert "no grounding clause found" in d["rationale"]
 
 
 def test_citing_an_unretrieved_clause_escalates():
-    d = apply_decision_rules(record(retrieved={"IRDAI:List-I": 1.0}))       # 9.3 never retrieved
+    d = apply_decision_rules(record(retrieved={"IRDAI:List-I": 1.0, "ASJ-01:4.1.i": 0.9}))   # 9.3 never retrieved
     assert d["escalation_reasons"] == ["citation_failed", "low_confidence"]
     assert "ASJ-01:9.3" in d["rationale"]
 

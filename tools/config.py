@@ -6,6 +6,7 @@ through ``load_config()`` so nothing is hard-coded.
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -27,9 +28,19 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
         return yaml.safe_load(fh)
 
 
+# Runtime outputs. Setting CLAIMLENS_RUNTIME_DIR moves just these (tests, notebook, servers),
+# so a run never writes into the repo's own state/ and logs/ unless you want it to.
+RUNTIME_KEYS = ("state_dir", "run_log", "review_queue")
+
+
 def project_path(key: str) -> Path:
     """Resolve a ``paths.<key>`` entry from config.yaml to an absolute path.
 
-    Example: ``project_path("state_dir")`` -> ``<repo>/state``.
+    Example: ``project_path("state_dir")`` -> ``<repo>/state``. With ``CLAIMLENS_RUNTIME_DIR`` set,
+    the runtime keys (``state_dir``, ``run_log``, ``review_queue``) resolve under that folder instead.
     """
-    return PROJECT_ROOT / load_config()["paths"][key]
+    rel = load_config()["paths"][key]
+    runtime = os.environ.get("CLAIMLENS_RUNTIME_DIR")
+    if runtime and key in RUNTIME_KEYS:
+        return Path(runtime) / rel
+    return PROJECT_ROOT / rel
