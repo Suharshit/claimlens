@@ -1,0 +1,20 @@
+{
+  "scenario": 6,
+  "verdict": "escalate",
+  "claimed": 42000,
+  "payable": 42000,
+  "overclaim": false,
+  "clauses": [],
+  "deductions": [],
+  "escalation_reasons": [
+    "no_grounding"
+  ],
+  "final_status": "escalated",
+  "working": [
+    "Bill total = 7500 + 1800 + 6000 + 14700 + 12000 = 42000",
+    "GHC-01 limits exist in policies.json (room cap 3000/day, no co-pay), so Cost can still compute: payable 42000",
+    "GHC-01 has no wording in the corpus -> retrieval returns no clause above min_similarity",
+    "No grounding clause -> the Manager must not auto-decide; escalate with 'no grounding clause found'",
+    "No clause may be cited, so clauses and deductions are empty"
+  ]
+}

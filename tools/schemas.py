@@ -27,17 +27,28 @@ PolicyId = Annotated[str, Field(pattern=r"^[A-Z][A-Z0-9]*-\d{2}$")]
 ClaimId = Annotated[str, Field(pattern=r"^CLM-\d{4}$")]
 
 ClauseId = Annotated[str, Field(pattern=r"^([A-Z][A-Z0-9]*-\d{2}|IRDAI):[A-Za-z0-9][A-Za-z0-9.\-]*$")]
-"""``ASJ-01:5.a.i`` or ``IRDAI:List-I``."""
+"""``ASJ-01:4.1.i`` or ``IRDAI:List-I``."""
 
 BillCategory = Literal[
     "room", "icu", "nursing", "professional", "ot",
     "pharmacy", "diagnostics", "consumables", "implants", "misc",
 ]
-"""Bill line categories. pharmacy / diagnostics / consumables / implants are not
-subject to proportionate room-rent deduction (IRDAI); see context/05-progress.md."""
+"""Bill line categories. Under the ASJ-01 wording (4.1 note 2) only ``pharmacy`` is exempt
+from the proportionate room-rent deduction; see context/05-progress.md."""
 
 Verdict = Literal["approve", "partial", "reject", "escalate"]
 Status = Literal["intake", "assessing", "decided", "escalated", "closed"]
+
+EscalationReason = Literal["high_value", "fraud_risk", "no_grounding", "low_confidence", "citation_failed"]
+"""Why the Adjudication Manager routes a claim to a human (M10). Shared codes for code and tests."""
+
+FraudReason = Literal[
+    "soon_after_inception", "amount_near_sum_insured", "duplicate_bill_number", "short_stay_non_daycare",
+]
+"""Reason codes ``score_risk`` emits (M6), one per rule in 02-architecture-brief."""
+
+HaltReason = Literal["missing_policy_id", "unknown_policy", "missing_claimed_amount"]
+"""Why intake stops (M2). No downstream agent runs."""
 
 
 class _Model(BaseModel):
@@ -195,15 +206,56 @@ SECTION_MODELS: dict[str, TypeAdapter[Any]] = {
 }
 
 
+# ---- prior-claim memory (data/prior_claims.json) ----
+
+class PriorClaim(_Model):
+    """One earlier claim in the Fraud Signal Agent's memory store."""
+    claim_id: Annotated[str, Field(pattern=r"^PC-\d{4}$")]
+    policyholder_id: str
+    policy_id: PolicyId
+    hospital: str
+    bill_number: str
+    admit: date
+    discharge: date
+    diagnosis: str
+    claimed: Rupees
+    paid: Rupees
+    outcome: Literal["approved", "partial", "rejected"]
+
+
 # ---- scenario test data (data/claims/<id>/expected.json) ----
 
 class ExpectedOutcome(_Model):
-    """Hand-worked expected result for one scenario claim."""
+    """Hand-worked expected result for one scenario claim.
+
+    ``fraud_reasons`` must all appear in the fraud section (others may too).
+    A halted claim (scenario 7) has no verdict, amounts or bill.
+    """
     scenario: Annotated[int, Field(ge=1, le=7)]
-    verdict: Verdict
-    claimed: Rupees
-    payable: Rupees
-    overclaim: bool
-    clauses: list[ClauseId]
-    deductions: list[Deduction]
+    verdict: Verdict | None
+    claimed: Rupees | None
+    payable: Rupees | None
+    overclaim: bool = False
+    clauses: list[ClauseId] = Field(default_factory=list)
+    deductions: list[Deduction] = Field(default_factory=list)
+    escalation_reasons: list[EscalationReason] = Field(default_factory=list)
+    fraud_reasons: list[FraudReason] = Field(default_factory=list)
+    fraud_min_score: Annotated[int, Field(ge=0, le=100)] | None = None
+    human_verdict: Verdict | None = None
+    final_status: Status
+    halt: HaltReason | None = None
     working: list[str]                   # the hand calculation, line by line
+
+    @model_validator(mode="after")
+    def _shape_matches_outcome(self) -> ExpectedOutcome:
+        if self.halt:
+            if self.verdict or self.payable is not None or self.final_status != "intake":
+                raise ValueError("a halted claim has no verdict or payable and stays in status 'intake'")
+            return self
+        if self.verdict is None or self.claimed is None or self.payable is None:
+            raise ValueError("verdict, claimed and payable are required unless the claim halts")
+        if (self.verdict == "escalate") != bool(self.escalation_reasons):
+            raise ValueError("escalation_reasons must be given exactly when the verdict is 'escalate'")
+        if self.human_verdict and self.final_status != "closed":
+            raise ValueError("a human verdict closes the claim")
+        return self

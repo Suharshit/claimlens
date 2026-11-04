@@ -1,0 +1,51 @@
+{
+  "scenario": 4,
+  "verdict": "escalate",
+  "claimed": 450000,
+  "payable": 426550,
+  "overclaim": false,
+  "clauses": [
+    "IRDAI:List-I",
+    "ASJ-01:9.3"
+  ],
+  "deductions": [
+    {
+      "item": "Gloves",
+      "amount": 600,
+      "reason": "non-payable item",
+      "clause_id": "IRDAI:List-I"
+    },
+    {
+      "item": "Mask",
+      "amount": 400,
+      "reason": "non-payable item",
+      "clause_id": "IRDAI:List-I"
+    },
+    {
+      "item": "Co-payment 5%",
+      "amount": 22450,
+      "reason": "5% co-payment on admissible claim",
+      "clause_id": "ASJ-01:9.3"
+    }
+  ],
+  "escalation_reasons": [
+    "high_value"
+  ],
+  "fraud_reasons": [
+    "amount_near_sum_insured"
+  ],
+  "human_verdict": "approve",
+  "final_status": "closed",
+  "working": [
+    "Bill total = 20000 + 15000 + 6000 + 90000 + 60000 + 160000 + 50000 + 48000 + 600 + 400 = 450000",
+    "ICU 10000/day = cap (ASJ-01:4.1.ii); room 5000/day = cap (ASJ-01:4.1.i) -> no proportionate deduction",
+    "Non-payable (IRDAI List I): gloves 600 + mask 400 = 1000",
+    "Admissible = 450000 - 1000 = 449000",
+    "Co-pay 5% of 449000 = 22450 (ASJ-01:9.3)",
+    "Payable = 449000 - 22450 = 426550 (under sum insured 500000)",
+    "Claimed 450000 > 200000 human-review threshold -> escalate (high_value); recommended payout 426550",
+    "Claimed is 90% of sum insured -> score_risk lists amount_near_sum_insured (score alone below 60)",
+    "Reviewer approves the recommended payout with a note; status becomes closed",
+    "Over-claim: (450000 - 426550) / 426550 = 5.5% < 10% -> no flag"
+  ]
+}

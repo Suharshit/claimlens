@@ -2,7 +2,7 @@
   "ASJ-01": {
     "policy_id": "ASJ-01",
     "name": "Arogya Sanjeevani (standard wording)",
-    "source": "IRDAI standard Arogya Sanjeevani wording as filed by insurers (section numbers from the Acko prospectus); waiting periods updated to the Oct 2024 revision (PED and joint replacement 48 -> 36 months). Verify every number and section against the wording PDF chunked into data/corpus/policies/ASJ-01/.",
+    "source": "IFFCO Tokio Arogya Sanjeevani Policy wording, UIN IFFHLIP20161V011920 (https://www.iffcotokio.co.in/content/dam/iffcotokio/iffco-pdf/policy-wordings-arogya-sanjeevani-policy.pdf). Numbers and section ids follow this wording; the PDF goes in data/corpus/policies/ASJ-01/ (see data/corpus/SOURCES.md).",
     "inception_date": "2026-01-01",
     "sum_insured": 500000,
     "room_cap_per_day": 5000,
@@ -16,22 +16,64 @@
       "initial_days": 30,
       "specific_conditions_months": 24,
       "pre_existing_months": 36,
-      "joint_replacement_months": 36
+      "joint_replacement_months": 48
     },
-    "specific_conditions": ["cataract", "hernia", "hysterectomy"],
+    "specific_conditions": [
+      "benign ENT disorders",
+      "tonsillectomy",
+      "adenoidectomy",
+      "mastoidectomy",
+      "tympanoplasty",
+      "hysterectomy",
+      "benign tumours, cysts and polyps (incl. benign breast lumps)",
+      "benign prostate hypertrophy",
+      "cataract and age-related eye ailments",
+      "gastric or duodenal ulcer",
+      "gout and rheumatism",
+      "hernia of all types",
+      "hydrocele",
+      "non-infective arthritis",
+      "piles, fissures and fistula in anus",
+      "pilonidal sinus, sinusitis and related disorders",
+      "prolapsed intervertebral disc and spinal diseases (unless accident)",
+      "calculi in urinary system, gall bladder and bile duct",
+      "varicose veins and varicose ulcers"
+    ],
     "pre_hospitalisation_days": 30,
     "post_hospitalisation_days": 60,
     "clause_refs": {
-      "room_rent": "ASJ-01:5.a.i",
-      "icu": "ASJ-01:5.a.ii",
-      "proportionate_deduction": "ASJ-01:5.note.ii",
-      "cataract": "ASJ-01:5.d",
-      "modern_treatments": "ASJ-01:5.g",
-      "pre_existing": "ASJ-01:6.a",
-      "initial_waiting": "ASJ-01:6.b",
-      "specific_conditions": "ASJ-01:6.c.i",
-      "copay": "ASJ-01:10.e",
-      "non_payable_items": "IRDAI:List-I"
+      "room_rent": "ASJ-01:4.1.i",
+      "icu": "ASJ-01:4.1.ii",
+      "proportionate_deduction": "ASJ-01:4.1.note2",
+      "cataract": "ASJ-01:4.3",
+      "modern_treatments": "ASJ-01:4.6",
+      "non_payable_items": "IRDAI:List-I",
+      "pre_existing": "ASJ-01:6.1",
+      "initial_waiting": "ASJ-01:6.2",
+      "specific_conditions": "ASJ-01:6.3.i",
+      "joint_replacement": "ASJ-01:6.3.ii",
+      "copay": "ASJ-01:9.3"
     }
+  },
+  "GHC-01": {
+    "policy_id": "GHC-01",
+    "name": "Group Health Cover (synthetic)",
+    "source": "Synthetic policy for scenario 6: limits exist here but its wording is deliberately NOT in the corpus, so retrieval finds no grounding clause.",
+    "inception_date": "2026-01-01",
+    "sum_insured": 300000,
+    "room_cap_per_day": 3000,
+    "icu_cap_per_day": 6000,
+    "copay_pct": 0,
+    "sub_limits": {},
+    "waiting_periods": {
+      "initial_days": 30,
+      "specific_conditions_months": 24,
+      "pre_existing_months": 36,
+      "joint_replacement_months": 48
+    },
+    "specific_conditions": [],
+    "pre_hospitalisation_days": 30,
+    "post_hospitalisation_days": 60,
+    "clause_refs": {}
   }
 }

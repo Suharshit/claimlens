@@ -1,0 +1,11 @@
+desc,category,qty,amount
+ICU charges,icu,2,20000
+Room charges (twin sharing),room,3,15000
+Nursing charges,nursing,5,6000
+Cardiologist fees - PTCA,professional,1,90000
+Cath lab charges,ot,1,60000
+Drug-eluting stents,implants,2,160000
+Medicines and consumables,pharmacy,1,50000
+"Investigations (angiography, ECG, echo, labs)",diagnostics,1,48000
+Gloves,consumables,1,600
+Mask,consumables,1,400

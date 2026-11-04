@@ -1,0 +1,10 @@
+desc,category,qty,amount
+Room charges (twin sharing),room,2,8000
+Nursing charges,nursing,2,1600
+Orthopaedic surgeon fees - ORIF,professional,1,30000
+Anaesthetist fees,professional,1,8000
+Operation theatre charges,ot,1,12000
+Locking plate and screws,implants,1,25000
+Medicines and IV fluids,pharmacy,1,9000
+"Investigations (X-ray, CT wrist)",diagnostics,1,5400
+Gloves,consumables,1,300

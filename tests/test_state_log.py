@@ -185,7 +185,7 @@ def test_parallel_policy_and_fraud_writes_both_survive(tmp_paths):
     def writer(section: str, agent: str) -> None:
         try:
             for i in range(25):
-                data = ({"clauses": [{"clause_id": "ASJ-01:5.a.i", "text": "room rent", "score": i / 100}]}
+                data = ({"clauses": [{"clause_id": "ASJ-01:4.1.i", "text": "room rent", "score": i / 100}]}
                         if section == "policy" else {"score": i, "reasons": []})
                 state.write_state("CLM-0001", section, data, agent=agent)
         except BaseException as exc:  # pragma: no cover - surfaced below
