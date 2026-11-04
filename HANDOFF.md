@@ -69,11 +69,9 @@ is a `WorkflowBuilder` graph with fan-out / fan-in edge groups; agents and tools
 
 The framework is merged, so the release will contain it.
 
-```powershell
-make release VERSION=v0.1.0      # pushes the tag; the release workflow builds and publishes claimlens.tar.gz
-```
+**Release v0.1.0 — done ✅** (5 Nov; tagged with plain git from PowerShell, since `make` only runs in WSL).
 
-Then follow `infra/README.md`: `aws configure` (ap-south-1) → copy `infra/terraform/example.tfvars` to
+Next, from **WSL Ubuntu** (`wsl --install -d Ubuntu-22.04` once), follow `infra/README.md`: `aws configure` (ap-south-1) → copy `infra/terraform/example.tfvars` to
 `terraform.tfvars` and set `admin_cidr` to your IP → `make up ENV=dev` (Terraform → Ansible → Puppet → Nagios)
 → sign the Puppet certificates → open Nagios through the SSH tunnel and check the new **scenario-1 functional
 check** (POST `/claims/CLM-0001/run`) is green → rehearse the S11 runbook (stop the app, edit nginx) and
