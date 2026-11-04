@@ -4,14 +4,19 @@ This is the single source of truth for where the project stands. Read it at the 
 
 ## Current status
 - **Phase:** Week 1 nearly done — data, state, schemas and chunked corpus in place (calendar: end of Week 2, about one week behind plan)
-- **Current week:** Week 2 by calendar; Week 2 tasks start next
+- **Current week:** Week 2 by calendar; Week 2 tasks under way
 - **Last updated:** 2026-11-04
-- **Next action:** Merge `feat/m3-chunking`. Week 1 is then complete apart from `extract_claim_fields` (needs the framework). Next: settle the framework + model lane, then Week 2 — `feat/m4-cost-tools` (`classify_items`, `room_rent_deduction`, `compute_payable` with exact-rupee tests against scenarios 1–6) and `feat/m3-search` (`search_policy_clauses`, `get_policy_limits`, `search_irdai_rules`).
+- **Next action:** Merge `feat/m4-cost-tools`. Then `feat/m6-fraud-tools` (`lookup_prior_claims`, `check_waiting_period`, `score_risk` — deterministic, no framework needed) and `feat/m3-search`. Settle the framework + model lane before wiring the agents.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-04 | Cost order: IRDAI lists → room/ICU caps → proportionate cuts (exact `Fraction`s) → round each cut half-up → sub-limit → 5% co-pay on admissible (rounded half-up) → sum-insured cap. Rounding only in `compute_payable` (`_round`); rows ordered so `claimed − Σ deductions = payable` | One auditable path; the deduction table always adds up |
+| 2026-11-04 | `classify_items` reads Lists I–IV from `chunks.jsonl` and matches the normalised description exactly (also without its bracketed part; '/' or ',' alternatives only for unqualified entries); List I → `non_payable`, Lists II–IV billed separately → `subsumed`, both deducted in full | No accidental partial-word matches; the lists come from the same corpus the citations do |
+| 2026-11-04 | Room-cap cut is one row "Room + nursing (N days)" (taken from room first, then nursing); ICU capped separately (4.1.ii); if both exceed, the lower ratio applies to the other expenses | Matches the scenario tables; one ratio keeps note 2 unambiguous |
+| 2026-11-04 | `compute_payable(items, limits, *, sub_limit=None, margin_pct=None)` returns exactly the `cost` section (`deductions`, `payable`, `overclaim`); the agent chooses `sub_limit` (e.g. `cataract_per_eye`) from the diagnosis; margin defaults to config. `overclaim_flag(claimed, payable, margin)` is the M5 helper | Keeps the brief's signature; sub-limits need clinical context the bill doesn't carry |
+| 2026-11-04 | Waiting-period rejection is not a cost deduction: Cost gives scenario 3 a bill-level payable (₹73,150); the Manager's reject makes the payout ₹0 | Cost stays pure bill maths; the decision lives with the Manager |
 | 2026-11-04 | Room cap (4.1.i) covers room rent + boarding + **nursing** per day; the proportionate ratio is cap ÷ (room + nursing) per day; the ICU rate already includes critical-care nursing (3.26) | Read from the PDF: 4.1.i names "Room Rent, Boarding, Nursing Expenses" under one ₹5,000 cap. Scenario bills re-shaped so 1, 4, 5, 6 sit at or under the cap; scenario 2 now room ₹7,000 + nursing ₹1,000, payable ₹48,925 |
 | 2026-11-04 | Clause ids follow the PDF's layout as chunked: proportionate note = `ASJ-01:4.1.1.note2` (it sits under 4.1.1), 30-day wait = `ASJ-01:6.2.i`; Annexure-A lists = `IRDAI:List-I`…`List-IV` (policy_id `IRDAI`); other annexures `ASJ-01:annex-b`/`annex-c` | Ids come from the chunker, never typed by hand; all scenario/limit ids verified present in `chunks.jsonl` |
 | 2026-11-04 | Commit the chunked text (`data/corpus/chunks.jsonl`, config `paths.chunks`), not the PDFs; a test rebuilds it from the PDF when present and must match exactly | CI and the lean servers search without PDFs or pdfplumber; the PDF stays the checkable source |
@@ -66,6 +71,7 @@ This is the single source of truth for where the project stands. Read it at the 
 - [x] IFFCO wording PDF downloaded and every scenario/limit clause id checked against it (2026-11-04, `tests/test_retrieval.py`).
 - [x] Commit only the chunked text (`data/corpus/chunks.jsonl`); PDFs stay git-ignored (2026-11-04).
 - [ ] (DevOps) When M3 search lands, how does retrieval run on the lean servers: BM25-only over the committed `chunks.jsonl` (no PDF/pdfplumber needed), a prebuilt vector index, or bigger app instances? Keep heavy imports inside functions so `api.py` still imports on servers.
+- [ ] Road ambulance: 4.1.1.v covers it up to ₹2,000 but List I item 67 is "AMBULANCE" — `classify_items` would mark a line named exactly "Ambulance" non-payable. Not in any scenario; decide if a claim needs it.
 - [ ] (DevOps) INT333 demo date (deadline TBD in `pipeline.config.yml`).
 - [ ] (DevOps) Turn on GitHub branch protection for `main` (require the `ci` checks) — needs the repo settings page.
 - [ ] (DevOps) Switch on the Nagios scenario-1 check (`nagios_functional_args`) once M7 works; put the model API key in Ansible Vault then.
@@ -96,8 +102,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M1 | Claim intake → structured record | A | In progress | 2026-11-04: `tools/schemas.py` filled, `parse_bill`, `validate_policy`, `load_policies` done + tested; `extract_claim_fields` (LLM) waits for the framework |
 | M2 | Halt on missing policy id / amount | A | In progress | `IntakeHalt` raised for missing/unknown policy and bad bills; missing-amount halt comes with `extract_claim_fields` |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | In progress | 2026-11-04: `split_clauses`, `chunk_wording`, `build_index`, `load_chunks` done; 202 chunks in `chunks.jsonl`; search tools next (Week 2) |
-| M4 | Deterministic payable calculation | A | Not started | |
-| M5 | Over-claiming flag | A | Not started | |
+| M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
+| M5 | Over-claiming flag | A | Done | 2026-11-04 `overclaim_flag`; set in `compute_payable` from config margin |
 | M6 | Fraud risk score with reasons | C | Not started | |
 | M7 | Parallel fan-out + fan-in | C | Not started | Stub: `workflow.py` |
 | M8 | Four verdicts with payout + clause | C | Not started | |
@@ -108,7 +114,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Not started | |
 | M15 | Test file (≥ 3 scenarios; plan 7) | A | In progress | All 7 scenario claims + hand-worked `expected.json` ready (CLM-0001…0007); `tests/test_scenarios.py` still skipped until M7 |
-| S1 | Deduction table in output | A | Not started | |
+| S1 | Deduction table in output | A | In progress | Table produced by `compute_payable` (item, amount, reason, clause); showing it in the notebook/UI comes later |
 | S2 | Grievance letter draft | — | Not started | |
 | S3 | Missing-document check | — | Not started | |
 | S4 | Streamlit UI | — | Not started | |
@@ -131,6 +137,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-04** · Suharshit · PR #5 merged (CI was queued ~10 min by a GitHub Actions incident, then green). Branch `feat/m4-cost-tools`: `classify_items` (IRDAI Lists I–IV from the corpus), `room_rent_deduction` (room + nursing pooled, ICU cap, note-2 ratio in exact fractions), `compute_payable` (half-up rounding, sub-limit, co-pay, SI cap, over-claim flag), `overclaim_flag`; reproduces every hand-worked cost table; `tests/test_cost_tools.py`. pytest 174 passed / 9 skipped, ruff clean. · Next: merge; `feat/m6-fraud-tools`; `feat/m3-search`; settle framework.
 
 - **2026-11-04** · Suharshit · PR #4 merged. Branch `feat/m3-chunking`: read the downloaded IFFCO PDF (37 pages) — found nursing sits inside the ₹5,000 room cap and the proportionate note is under 4.1.1; re-shaped scenario bills 1–4 and 6 (scenario 2 payable now ₹48,925), re-keyed `4.1.1.note2` and `6.2.i`. Built `split_clauses` / `chunk_wording` / `build_index` / `load_chunks`, committed `data/corpus/chunks.jsonl` (202 chunks), `tests/test_retrieval.py` (splitter on synthetic text, every referenced clause present, clause text matches the maths, rebuild == committed). pytest 139 passed / 11 skipped, ruff clean. · Next: merge; settle framework; Week 2 cost tools + search.
 
