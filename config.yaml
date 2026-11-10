@@ -3,8 +3,39 @@
 
 model:
   temperature: 0          # temperature 0 for intake and decisions
-  # lane / model name: still an open question (see context/05-progress.md).
-  # Keys and endpoints go in .env, never here.
+
+# M1 LLM path: free open-weight models behind OpenAI-compatible APIs (tools/llm_client.py).
+# Only the Intake Agent uses it, as a second reading checked by the rules; no money, ever.
+# Providers are tried in order. Caps are OUR limits, kept below each free tier; usage is
+# counted in paths.llm_usage. `python -m tools.llm_client` shows what's left.
+# Keys go in .env (GROQ_API_KEY, NVIDIA_API_KEY), never here. CLAIMLENS_LLM=off → rules only.
+llm:
+  enabled: true           # on, but with no key set it falls back to the rules (CI, servers)
+  timeout_s: 30
+  max_tokens: 400
+  providers:
+    - name: groq
+      base_url: https://api.groq.com/openai/v1
+      model: llama-3.3-70b-versatile
+      key_env: GROQ_API_KEY
+      json_mode: true
+      caps:               # Groq free tier for this model: 30 RPM, 1,000 RPD, 12K TPM, 100K TPD
+        requests_per_minute: 25
+        requests_per_day: 900
+        tokens_per_minute: 10000
+        tokens_per_day: 90000
+    - name: nvidia
+      base_url: https://integrate.api.nvidia.com/v1
+      model: nvidia/nemotron-3-nano-30b-a3b
+      key_env: NVIDIA_API_KEY
+      json_mode: false
+      extra:
+        chat_template_kwargs: {enable_thinking: false}   # extraction needs no reasoning trace
+      caps:               # build.nvidia.com is credit-metered; these are conservative self-caps
+        requests_per_minute: 30
+        requests_per_day: 200
+        tokens_per_minute: null
+        tokens_per_day: null
 
 retrieval:
   top_k: 5
@@ -34,3 +65,4 @@ paths:
   state_dir: state
   review_queue: state/review_queue.json
   run_log: logs/run_log.jsonl
+  llm_usage: state/llm_usage.json   # LLM usage ledger; NOT a runtime key, so caps hold across notebook/tests/API

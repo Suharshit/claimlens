@@ -45,11 +45,11 @@ def extract_claim_fields(text: str) -> dict[str, Any]:
     M2: if policy id or claimed amount is missing, halt with a clear message
     rather than guessing (scenario 7).
 
-    Until the agent framework and model lane are chosen, this is the deterministic rule-based
-    extractor for the claim-message format in ``data/claims/*/claim.txt``. It stays as the
-    offline path (CI, tests, no API key) when the LLM path is added; both must return the same
-    ``ClaimIntake`` fields. Raises ``IntakeHalt`` (with ``.reason`` = a ``HaltReason``) when the
-    policy id or the claimed amount is missing.
+    This is the deterministic rule-based extractor for the claim-message format in
+    ``data/claims/*/claim.txt``: the offline path (CI, tests, no API key) and the oracle the
+    LLM path is checked against (``llm_extract_claim_fields`` + ``reconcile_fields``).
+    Raises ``IntakeHalt`` (with ``.reason`` = a ``HaltReason``) when the policy id or the
+    claimed amount is missing — the halt is always decided here, never by the LLM.
     """
     flat = " ".join(text.split())
 
@@ -95,6 +95,113 @@ def extract_claim_fields(text: str) -> dict[str, Any]:
         "bill_number": bill.group(1) if bill else None,
         "accident": re.search(r"\baccident(?:al)?\b", lower) is not None,
     }
+
+
+# ---- LLM path (M1): an open-weight model reads the same message; the rules check it ----
+
+LLM_FIELDS = ("policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis",
+              "room_type", "claimed", "bill_number", "accident")
+# Never taken from the LLM: they gate the halt (M2) and the money (fixed rule: no money from the LLM).
+RULES_ONLY = ("policy_id", "claimed")
+_GAPS = (None, "", "not stated")
+
+_SYSTEM = (
+    "You extract fields from a synthetic Indian health-insurance claim message. "
+    "Reply with ONE JSON object and nothing else, with exactly these keys: "
+    "policy_id, policyholder_id, patient, admit, discharge, diagnosis, procedure, room_type, "
+    "claimed, bill_number, accident. "
+    "Dates as YYYY-MM-DD. claimed = the total amount claimed as an integer number of rupees. "
+    "accident = true or false. room_type in lower case as written (e.g. 'twin-sharing room'). "
+    "Drop '(synthetic)' from names. Copy values as written; use null when the message does not "
+    "state a value. Never guess."
+)
+
+
+def llm_extract_claim_fields(text: str, *, client: Any = None) -> dict[str, Any]:
+    """Ask the configured open-weight model (Groq, then NVIDIA) for the claim fields.
+
+    Returns ``{"fields": {...}, "provider", "model", "tokens", "budget"}``. ``fields`` uses the
+    ``extract_claim_fields`` keys (procedure folded into diagnosis), unset values as ``None``.
+    Raises ``tools.llm_client.LlmUnavailable`` when no provider answered with usable JSON,
+    so the caller keeps the rule-based result.
+    """
+    from tools.llm_client import LlmClient, LlmUnavailable, parse_json_reply
+
+    client = client or LlmClient()
+    reply = client.chat([{"role": "system", "content": _SYSTEM},
+                         {"role": "user", "content": text}], json_mode=True)
+    try:
+        raw = parse_json_reply(reply.text)
+    except ValueError as exc:
+        raise LlmUnavailable(f"{reply.provider} replied without usable JSON: {exc}",
+                             [f"{reply.provider}: bad JSON"]) from exc
+
+    def clean(value: Any) -> Any:
+        if isinstance(value, str):
+            value = " ".join(value.split()).removesuffix("(synthetic)").strip()
+            return value or None
+        return value
+
+    fields = {k: clean(raw.get(k)) for k in LLM_FIELDS}
+    procedure = clean(raw.get("procedure"))
+    if procedure and fields["diagnosis"] and procedure.lower() not in str(fields["diagnosis"]).lower():
+        fields["diagnosis"] = f"{fields['diagnosis']}; {procedure}"
+    if fields["claimed"] is not None:
+        digits = re.sub(r"[^\d]", "", str(fields["claimed"]))
+        fields["claimed"] = int(digits) if digits else None
+    if fields["accident"] is not None and not isinstance(fields["accident"], bool):
+        fields["accident"] = str(fields["accident"]).strip().lower() == "true"
+    return {"fields": fields, "provider": reply.provider, "model": reply.model,
+            "tokens": reply.tokens, "budget": reply.budget}
+
+
+def _norm(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", str(value).lower()).strip()
+
+
+def _agree(key: str, rule: Any, llm: Any) -> bool:
+    if isinstance(rule, bool) or isinstance(llm, bool):
+        return rule == llm
+    if key == "diagnosis":   # wording varies: agree when either main diagnosis appears in the other
+        main_rule, main_llm = _norm(str(rule).split(";")[0]), _norm(str(llm).split(";")[0])
+        return bool(main_rule and main_llm) and (main_rule in _norm(llm) or main_llm in _norm(rule))
+    return _norm(rule) == _norm(llm)
+
+
+def reconcile_fields(rule_fields: dict[str, Any],
+                     llm_fields: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """Merge the LLM reading into the rule reading. The rules win every disagreement.
+
+    - ``policy_id`` and ``claimed`` always come from the rules (they gate the halt and the money).
+    - A field the rules could not read (``None`` / ``"not stated"``) is filled from the LLM.
+    - Any other difference is reported as a mismatch and the rule value is kept.
+
+    Returns ``(merged_fields, report)``; ``report`` = agreed / filled / mismatches / errors.
+    If the filled record would not validate as ``ClaimIntake``, the rule fields are returned.
+    """
+    from tools.schemas import ClaimIntake
+
+    merged = dict(rule_fields)
+    report: dict[str, Any] = {"agreed": [], "filled": [], "mismatches": {}, "errors": []}
+    for key in LLM_FIELDS:
+        rule, llm = rule_fields.get(key), llm_fields.get(key)
+        if llm in _GAPS:
+            continue
+        if key not in RULES_ONLY and rule in _GAPS:
+            merged[key] = llm
+            report["filled"].append(key)
+        elif _agree(key, rule, llm):
+            report["agreed"].append(key)
+        else:
+            report["mismatches"][key] = {"rules": rule, "llm": llm}
+    if report["filled"]:
+        try:
+            ClaimIntake.model_validate(merged)
+        except ValidationError as exc:
+            report["errors"].append(f"filled fields failed validation, kept rules: {exc.errors()[0]['msg']}")
+            report["filled"] = []
+            merged = dict(rule_fields)
+    return merged, report
 
 
 # Whole rupees, optionally with Indian or western comma grouping: 450, 1,500, 1,51,230.
