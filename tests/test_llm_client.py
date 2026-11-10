@@ -339,3 +339,19 @@ def test_intake_halt_is_decided_before_the_llm(runtime, monkeypatch):
     monkeypatch.setattr(intake_agent, "llm_extract_claim_fields", never)
     rec = asyncio.run(run_claim("CLM-0007"))
     assert rec["halt"] and rec["status"] == "intake"
+
+
+def test_retired_model_error_says_how_to_fix_it(keys, ledger):
+    api = FakeApi({"a.example": status(410)})
+    with pytest.raises(LlmUnavailable) as exc:
+        client(api, ledger, provider("a")).chat(PING)
+    assert "HTTP 410" in exc.value.reasons[0] and "python -m tools.llm_client models" in exc.value.reasons[0]
+
+
+def test_models_lists_what_the_key_can_use(keys, ledger):
+    def listing(request):
+        assert request.url.path == "/v1/models" and request.headers["authorization"] == "Bearer key-a"
+        return httpx.Response(200, json={"data": [{"id": "z-model"}, {"id": "a-model"}]})
+    api = FakeApi({"a.example": listing})
+    assert client(api, ledger, provider("a")).models(client(api, ledger, provider("a")).providers[0]) == ["a-model", "z-model"]
+    assert budget(client(api, ledger, provider("a")).providers[0], ledger)["used"]["requests_per_day"] == 0  # listing is free

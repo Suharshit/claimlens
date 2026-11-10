@@ -79,7 +79,7 @@ check** (POST `/claims/CLM-0001/run`) is green → rehearse the S11 runbook (sto
 
 ### 5. LLM intake — built on `feat/m1-llm-intake` (2026-11-10)
 
-Model lane: Groq (`llama-3.3-70b-versatile`) → NVIDIA build (`nvidia/nemotron-3-nano-30b-a3b`) → rules.
+Model lane: Groq (`qwen/qwen3.8-27b`) → NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`) → rules.
 The rules still extract first and decide any halt; the LLM is a second reading and the rules win every
 disagreement (logged). Calls are capped below each free tier (`config.yaml` `llm:`), counted in
 `state/llm_usage.json`. To finish:

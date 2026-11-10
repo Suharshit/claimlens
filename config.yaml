@@ -8,6 +8,7 @@ model:
 # Only the Intake Agent uses it, as a second reading checked by the rules; no money, ever.
 # Providers are tried in order. Caps are OUR limits, kept below each free tier; usage is
 # counted in paths.llm_usage. `python -m tools.llm_client` shows what's left.
+# Providers retire models: `python -m tools.llm_client models` lists what your keys can use now.
 # Keys go in .env (GROQ_API_KEY, NVIDIA_API_KEY), never here. CLAIMLENS_LLM=off → rules only.
 llm:
   enabled: true           # on, but with no key set it falls back to the rules (CI, servers)
@@ -16,17 +17,19 @@ llm:
   providers:
     - name: groq
       base_url: https://api.groq.com/openai/v1
-      model: llama-3.3-70b-versatile
+      model: qwen/qwen3.8-27b   # checked 2026-11-10: 10/10 fields agree on claim 1, ~0.6 s
       key_env: GROQ_API_KEY
       json_mode: true
-      caps:               # Groq free tier for this model: 30 RPM, 1,000 RPD, 12K TPM, 100K TPD
+      extra:
+        reasoning_format: hidden   # keep any reasoning out of the reply text
+      caps:               # Groq free tier (from its x-ratelimit headers): 1,000 RPD, 8K TPM; 30 RPM
         requests_per_minute: 25
         requests_per_day: 900
-        tokens_per_minute: 10000
-        tokens_per_day: 90000
+        tokens_per_minute: 7000
+        tokens_per_day: 90000      # conservative: Groq doesn't report a daily token limit in headers
     - name: nvidia
       base_url: https://integrate.api.nvidia.com/v1
-      model: nvidia/nemotron-3-nano-30b-a3b
+      model: nvidia/nemotron-3.5-lightning-30b-a3b   # checked 2026-11-10: 10/10 agree; 3-nano retired 2026-09-01
       key_env: NVIDIA_API_KEY
       json_mode: false
       extra:

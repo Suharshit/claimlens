@@ -10,6 +10,7 @@ across runs and the remaining budget can be shown:
 
     python -m tools.llm_client          # budget left per provider (no API call)
     python -m tools.llm_client ping     # one tiny real call per provider with a key
+    python -m tools.llm_client models   # chat models each key can use now (after a 404/410)
 
 Keys come from the environment or ``.env`` (never config.yaml, never the repo).
 Set ``CLAIMLENS_LLM=off`` to force the rule-based path (the test suite does this).
@@ -231,6 +232,16 @@ class LlmClient:
         """Providers whose API key is set."""
         return [p for p in self.providers if self.key(p)]
 
+    def models(self, provider: Provider) -> list[str]:
+        """Model ids the provider lists for this key (``GET /models``; not counted, it's free)."""
+        key = self.key(provider)
+        if not key:
+            raise LlmUnavailable(f"{provider.name}: no key ({provider.key_env} not set)")
+        with httpx.Client(transport=self.transport, timeout=float(self.settings.get("timeout_s", 30))) as http:
+            resp = http.get(f"{provider.base_url}/models", headers={"Authorization": f"Bearer {key}"})
+        resp.raise_for_status()
+        return sorted(m["id"] for m in resp.json().get("data", []))
+
     def status(self) -> list[dict[str, Any]]:
         """Budget for every configured provider (no API call)."""
         return [{**budget(p, self.ledger), "key_set": self.key(p) is not None} for p in self.providers]
@@ -284,7 +295,11 @@ class LlmClient:
             raise _ProviderError(f"HTTP 429 rate limit, blocked for {round(wait)} s")
         if resp.status_code >= 400:
             self.ledger.record(p.name, 0, headers)
-            raise _ProviderError(f"HTTP {resp.status_code}: {resp.text[:160]}")
+            hint = ""
+            if resp.status_code in (404, 410):
+                hint = (f" — model {p.model!r} retired or not on this key; "
+                        "run `python -m tools.llm_client models` and update config.yaml")
+            raise _ProviderError(f"HTTP {resp.status_code}{hint}: {resp.text[:160]}")
         try:
             data = resp.json()
             text = data["choices"][0]["message"].get("content") or ""
@@ -340,6 +355,18 @@ def _print_status(client: LlmClient) -> None:
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     client = LlmClient()
+    if args[:1] == ["models"]:
+        skip = ("embed", "guard", "whisper", "orpheus", "reward", "parse", "safety", "retriever", "vision", "vl")
+        for p in client.providers:
+            try:
+                ids = [m for m in client.models(p) if not any(s in m.lower() for s in skip)]
+            except (LlmUnavailable, httpx.HTTPError) as exc:
+                print(f"{p.name}: could not list models — {exc}")
+                continue
+            print(f"\n[{p.name}] configured: {p.model}" + ("" if p.model in ids else "   ← NOT in the list"))
+            for m in ids:
+                print(f"  {'*' if m == p.model else ' '} {m}")
+        return 0
     if args[:1] == ["ping"]:
         code = 0
         for p in client.configured() or client.providers:
