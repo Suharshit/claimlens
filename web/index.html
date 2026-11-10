@@ -93,7 +93,30 @@
   .modal pre { white-space: pre-wrap; font: 13px/1.55 system-ui, sans-serif; }
   .acc { font-size: 32px; font-weight: 800; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 16px; border-top: 1px solid var(--line); background: var(--panel); }
-  .arch img { max-width: 100%; height: auto; max-height: 75vh; display: block; margin: 0 auto; }
+  .archsvg { width: 100%; max-width: 1100px; height: auto; display: block; margin: 8px auto 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .archsvg .n-agent { fill: #eef3ff; stroke: #3b6fd8; stroke-width: 1.5; }
+  .archsvg .n-key { stroke-width: 2.5; }
+  .archsvg .n-human { fill: #f6f0ff; stroke: #6d28d9; }
+  .archsvg .n-input { fill: #fff8e1; stroke: #d39b0b; stroke-width: 1.5; }
+  .archsvg .n-out { fill: #e8f6ed; stroke: #15803d; stroke-width: 1.5; }
+  .archsvg .n-stop { fill: #fdecec; stroke: #b91c1c; stroke-width: 1.5; }
+  .archsvg .n-store { fill: #f1f3f6; stroke: #64748b; stroke-width: 1.5; }
+  .archsvg .band { fill: rgba(29, 78, 216, .04); stroke: #1d4ed8; stroke-width: 1.2; stroke-dasharray: 6 5; }
+  .archsvg .sep { stroke: #94a3b8; stroke-width: 1; }
+  .archsvg .e { stroke: #475569; stroke-width: 1.8; fill: none; }
+  .archsvg .e-b { stroke: #1d4ed8; stroke-width: 3.2; }
+  .archsvg .e-r { stroke: #b91c1c; }
+  .archsvg .e-v { stroke: #6d28d9; stroke-width: 2.2; }
+  .archsvg .e-s, .archsvg .e-s line, .archsvg .e-s path { stroke: #94a3b8; stroke-width: 1.4; stroke-dasharray: 5 4; fill: none; }
+  .archsvg text { fill: #18202b; }
+  .archsvg .t-title { font-size: 16px; font-weight: 700; }
+  .archsvg .t-mono { font: 12.5px ui-monospace, "Cascadia Mono", Consolas, monospace; fill: #1e3a8a; }
+  .archsvg .t-note { font-size: 12.5px; fill: #475569; }
+  .archsvg .t-note-b { font-size: 12.5px; font-weight: 700; fill: #4c1d95; }
+  .archsvg .t-edge { font-size: 12px; font-style: italic; fill: #334155; }
+  .archsvg .t-v { fill: #6d28d9; font-weight: 600; }
+  .archsvg .t-s { fill: #64748b; }
+  .archsvg .t-band { font-size: 11px; font-weight: 700; letter-spacing: .08em; fill: #1d4ed8; }
   @media (max-width: 900px) { aside .stick { position: static; } .layout { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } aside { border-right: none; border-bottom: 1px solid var(--line); } }
 </style>
 </head>
@@ -127,7 +150,164 @@
       <div class="card">
         <h3>How it runs</h3>
         <p>Intake runs first. <b>Policy Retrieval and Fraud Signal then run in parallel</b>; <b>Cost waits only for the policy limits</b>; the <b>Manager fans in</b> and is the one place a verdict is made; escalations go to the <b>Human Review Desk</b>. Agents share one claim-state record and never import each other. All money maths is deterministic Python; the LLM only gives Intake a second reading of the claim, and the rules win any disagreement.</p>
-        <img src="/architecture.png" alt="ClaimLens architecture diagram">
+        <svg class="archsvg" viewBox="0 0 1100 1400" role="img" aria-labelledby="arch-title arch-desc" xmlns="http://www.w3.org/2000/svg">
+          <title id="arch-title">ClaimLens architecture</title>
+          <desc id="arch-desc">Claim and bill go to the Intake Agent, which halts on missing data or fans out to Policy Retrieval and Fraud Signal in parallel. Policy posts limits first so Cost Assessment can start. Policy, Fraud and Cost fan in to the Adjudication Manager, which either decides automatically or escalates to the Human Review Desk. Every agent reads and writes only the shared claim-state record; every write is appended to the run log.</desc>
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker>
+            <marker id="ah-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#1d4ed8"/></marker>
+            <marker id="ah-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#b91c1c"/></marker>
+            <marker id="ah-v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#6d28d9"/></marker>
+            <marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+          </defs>
+
+          <!-- ===== shared state rail (right) ===== -->
+          <g>
+            <rect x="900" y="130" width="180" height="1110" rx="18" class="n-store"/>
+            <ellipse cx="990" cy="130" rx="90" ry="16" class="n-store"/>
+            <text x="990" y="178" class="t-title" text-anchor="middle">Shared claim-</text>
+            <text x="990" y="198" class="t-title" text-anchor="middle">state record</text>
+            <text x="990" y="222" class="t-mono" text-anchor="middle">state/&lt;claim_id&gt;.json</text>
+            <text x="990" y="254" class="t-note" text-anchor="middle">each agent writes</text>
+            <text x="990" y="271" class="t-note" text-anchor="middle">only its own section</text>
+            <g class="t-mono" text-anchor="middle">
+              <text x="990" y="306">intake · bill_items</text>
+              <text x="990" y="346">policy</text>
+              <text x="990" y="410">fraud</text>
+              <text x="990" y="614">cost</text>
+              <text x="990" y="790">decision</text>
+              <text x="990" y="1010">human</text>
+            </g>
+            <line x1="920" y1="1090" x2="1060" y2="1090" class="sep"/>
+            <text x="990" y="1118" class="t-title" text-anchor="middle">Run log</text>
+            <text x="990" y="1138" class="t-mono" text-anchor="middle">logs/run_log.jsonl</text>
+            <text x="990" y="1162" class="t-note" text-anchor="middle">every write appended</text>
+            <text x="990" y="1179" class="t-note" text-anchor="middle">(append-only trace)</text>
+            <text x="990" y="1212" class="t-note" text-anchor="middle">agents never import</text>
+            <text x="990" y="1229" class="t-note" text-anchor="middle">each other</text>
+          </g>
+
+          <!-- ===== input ===== -->
+          <rect x="320" y="20" width="300" height="62" rx="10" class="n-input"/>
+          <text x="470" y="46" class="t-title" text-anchor="middle">Claim text + hospital bill</text>
+          <text x="470" y="67" class="t-mono" text-anchor="middle">data/claims/&lt;id&gt;/</text>
+          <line x1="470" y1="82" x2="470" y2="128" class="e" marker-end="url(#ah)"/>
+
+          <!-- ===== intake ===== -->
+          <rect x="210" y="130" width="520" height="122" rx="12" class="n-agent"/>
+          <text x="470" y="157" class="t-title" text-anchor="middle">Intake Agent</text>
+          <text x="470" y="179" class="t-mono" text-anchor="middle">extract_claim_fields · parse_bill · validate_policy</text>
+          <text x="470" y="197" class="t-mono" text-anchor="middle">llm_extract_claim_fields · reconcile_fields</text>
+          <text x="470" y="219" class="t-note" text-anchor="middle">rules read first and decide any halt; free open-weight LLM gives a second reading</text>
+          <text x="470" y="237" class="t-note" text-anchor="middle">(Groq qwen3.8-27b → NVIDIA Nemotron → rules) — the rules win every disagreement</text>
+
+          <!-- halt -->
+          <rect x="20" y="140" width="168" height="102" rx="10" class="n-stop"/>
+          <text x="104" y="166" class="t-title" text-anchor="middle">Halt (M2)</text>
+          <text x="104" y="187" class="t-note" text-anchor="middle">ask for the missing</text>
+          <text x="104" y="203" class="t-note" text-anchor="middle">policy id / amount / bill</text>
+          <text x="104" y="224" class="t-note" text-anchor="middle">nothing downstream runs</text>
+          <line x1="210" y1="191" x2="190" y2="191" class="e e-r" marker-end="url(#ah-r)"/>
+
+          <!-- ===== fan-out band ===== -->
+          <rect x="200" y="282" width="540" height="190" rx="14" class="band"/>
+          <text x="475" y="275" class="t-band" text-anchor="middle">FAN-OUT · RUN IN PARALLEL</text>
+          <line x1="345" y1="252" x2="345" y2="314" class="e e-b" marker-end="url(#ah-b)"/>
+          <line x1="605" y1="252" x2="605" y2="314" class="e e-b" marker-end="url(#ah-b)"/>
+
+          <!-- policy -->
+          <rect x="215" y="316" width="250" height="140" rx="12" class="n-agent"/>
+          <text x="340" y="342" class="t-title" text-anchor="middle">Policy Retrieval Agent</text>
+          <text x="340" y="364" class="t-mono" text-anchor="middle">get_policy_limits</text>
+          <text x="340" y="381" class="t-mono" text-anchor="middle">search_policy_clauses</text>
+          <text x="340" y="398" class="t-mono" text-anchor="middle">search_irdai_rules</text>
+          <text x="340" y="421" class="t-note" text-anchor="middle">BM25 over IFFCO ASJ wording +</text>
+          <text x="340" y="437" class="t-note" text-anchor="middle">IRDAI Lists I–IV, by policy id</text>
+
+          <!-- fraud -->
+          <rect x="485" y="316" width="240" height="140" rx="12" class="n-agent"/>
+          <text x="605" y="342" class="t-title" text-anchor="middle">Fraud Signal Agent</text>
+          <text x="605" y="364" class="t-mono" text-anchor="middle">lookup_prior_claims</text>
+          <text x="605" y="381" class="t-mono" text-anchor="middle">check_waiting_period</text>
+          <text x="605" y="398" class="t-mono" text-anchor="middle">score_risk</text>
+          <text x="605" y="421" class="t-note" text-anchor="middle">prior_claims.json · weighted</text>
+          <text x="605" y="437" class="t-note" text-anchor="middle">rules · waiting periods</text>
+
+          <!-- ===== cost ===== -->
+          <line x1="345" y1="456" x2="345" y2="534" class="e" marker-end="url(#ah)"/>
+          <text x="353" y="500" class="t-edge">limits posted first</text>
+          <rect x="250" y="536" width="190" height="118" rx="12" class="n-agent"/>
+          <text x="345" y="562" class="t-title" text-anchor="middle">Cost Assessment</text>
+          <text x="345" y="584" class="t-mono" text-anchor="middle">classify_items</text>
+          <text x="345" y="601" class="t-mono" text-anchor="middle">room_rent_deduction</text>
+          <text x="345" y="618" class="t-mono" text-anchor="middle">compute_payable</text>
+          <text x="345" y="640" class="t-note" text-anchor="middle">all rupee maths in Python</text>
+
+          <!-- ===== fan-in to manager ===== -->
+          <line x1="228" y1="456" x2="228" y2="748" class="e" marker-end="url(#ah)"/>
+          <text x="220" y="600" class="t-edge" text-anchor="end">retrieved</text>
+          <text x="220" y="616" class="t-edge" text-anchor="end">clauses</text>
+          <line x1="345" y1="654" x2="345" y2="748" class="e" marker-end="url(#ah)"/>
+          <text x="353" y="700" class="t-edge">payable, deduction table</text>
+          <line x1="605" y1="456" x2="605" y2="748" class="e" marker-end="url(#ah)"/>
+          <text x="613" y="530" class="t-edge">risk score,</text>
+          <text x="613" y="546" class="t-edge">waiting-period check</text>
+          <text x="710" y="742" class="t-band" text-anchor="end">FAN-IN</text>
+
+          <rect x="210" y="750" width="520" height="118" rx="12" class="n-agent n-key"/>
+          <text x="470" y="777" class="t-title" text-anchor="middle">Adjudication Manager</text>
+          <text x="470" y="799" class="t-mono" text-anchor="middle">apply_decision_rules · verify_citations · write_decision</text>
+          <text x="470" y="822" class="t-note" text-anchor="middle">the one place a verdict is made · cites only clauses that were retrieved</text>
+          <text x="470" y="840" class="t-note" text-anchor="middle">(citation guard) · confidence = weakest cited clause's retrieval score</text>
+          <text x="470" y="858" class="t-note" text-anchor="middle">approve · partial · reject · escalate</text>
+
+          <!-- ===== outputs ===== -->
+          <line x1="330" y1="868" x2="330" y2="958" class="e" marker-end="url(#ah)"/>
+          <text x="338" y="918" class="t-edge">auto decision</text>
+          <rect x="215" y="960" width="230" height="84" rx="12" class="n-out"/>
+          <text x="330" y="988" class="t-title" text-anchor="middle">Auto decision</text>
+          <text x="330" y="1009" class="t-note" text-anchor="middle">approve · partial · reject</text>
+          <text x="330" y="1027" class="t-note" text-anchor="middle">payout + clause per deduction</text>
+
+          <line x1="605" y1="868" x2="605" y2="958" class="e e-v" marker-end="url(#ah-v)"/>
+          <text x="613" y="918" class="t-edge t-v">escalate</text>
+          <rect x="485" y="960" width="240" height="200" rx="12" class="n-agent n-human"/>
+          <text x="605" y="987" class="t-title" text-anchor="middle">Human Review Desk</text>
+          <text x="605" y="1008" class="t-mono" text-anchor="middle">create_review_ticket</text>
+          <text x="605" y="1025" class="t-mono" text-anchor="middle">record_human_verdict</text>
+          <text x="500" y="1052" class="t-note-b">Escalates when:</text>
+          <text x="500" y="1071" class="t-note">• claimed &gt; ₹2,00,000</text>
+          <text x="500" y="1088" class="t-note">• fraud score ≥ 60</text>
+          <text x="500" y="1105" class="t-note">• no grounding clause found</text>
+          <text x="500" y="1122" class="t-note">• cited clause not retrieved</text>
+          <text x="500" y="1139" class="t-note">• confidence &lt; 0.6</text>
+
+          <!-- closed -->
+          <line x1="330" y1="1044" x2="330" y2="1248" class="e" marker-end="url(#ah)"/>
+          <line x1="605" y1="1160" x2="605" y2="1248" class="e" marker-end="url(#ah)"/>
+          <text x="613" y="1206" class="t-edge">reviewer verdict + note</text>
+          <rect x="320" y="1250" width="300" height="56" rx="28" class="n-out"/>
+          <text x="470" y="1284" class="t-title" text-anchor="middle">Claim closed</text>
+
+          <!-- ===== state links (dashed) ===== -->
+          <g class="e-s">
+            <path d="M730,200 H830 V302 H898" fill="none" marker-end="url(#ah-s)"/>
+            <path d="M465,436 H475 V292 H780 V342 H898" fill="none" marker-end="url(#ah-s)"/>
+            <line x1="725" y1="406" x2="898" y2="406"  marker-end="url(#ah-s)"/>
+            <path d="M440,610 H898" fill="none" marker-end="url(#ah-s)"/>
+            <line x1="730" y1="786" x2="898" y2="786"  marker-end="url(#ah-s)"/>
+            <line x1="725" y1="1006" x2="898" y2="1006" marker-end="url(#ah-s)"/>
+          </g>
+
+          <!-- ===== legend ===== -->
+          <g transform="translate(20,1340)">
+            <rect x="0" y="-14" width="22" height="16" rx="4" class="n-agent"/><text x="30" y="0" class="t-note">agent (own module, ≥ 2 Python tools)</text>
+            <line x1="290" y1="-6" x2="330" y2="-6" class="e e-b" marker-end="url(#ah-b)"/><text x="338" y="0" class="t-note">parallel fan-out</text>
+            <line x1="460" y1="-6" x2="500" y2="-6" class="e" marker-end="url(#ah)"/><text x="508" y="0" class="t-note">data passed on via the record</text>
+            <line x1="700" y1="-6" x2="740" y2="-6" class="e-s" marker-end="url(#ah-s)"/><text x="748" y="0" class="t-note">writes its own section</text>
+            <text x="0" y="30" class="t-note">Microsoft Agent Framework workflow (workflow.py): each agent is an executor; the only message on an edge is the claim id.</text>
+          </g>
+        </svg>
       </div>
     </section>
   </main>
