@@ -1,0 +1,500 @@
+{
+  "claim_id": "CLM-0001",
+  "status": "closed",
+  "intake": {
+    "policy_id": "ASJ-01",
+    "policyholder_id": "PH-1001",
+    "patient": "Ravi Kumar",
+    "admit": "2026-09-02",
+    "discharge": "2026-09-05",
+    "diagnosis": "acute appendicitis; laparoscopic appendectomy",
+    "room_type": "twin-sharing room",
+    "claimed": 85000,
+    "bill_number": "SMH/26/04417",
+    "accident": false
+  },
+  "bill_items": [
+    {
+      "desc": "Room charges (twin sharing)",
+      "category": "room",
+      "qty": 3,
+      "amount": 12000
+    },
+    {
+      "desc": "Nursing charges",
+      "category": "nursing",
+      "qty": 3,
+      "amount": 3000
+    },
+    {
+      "desc": "Surgeon fees - laparoscopic appendectomy",
+      "category": "professional",
+      "qty": 1,
+      "amount": 25000
+    },
+    {
+      "desc": "Anaesthetist fees",
+      "category": "professional",
+      "qty": 1,
+      "amount": 8000
+    },
+    {
+      "desc": "Operation theatre charges",
+      "category": "ot",
+      "qty": 1,
+      "amount": 15000
+    },
+    {
+      "desc": "Medicines and IV fluids",
+      "category": "pharmacy",
+      "qty": 1,
+      "amount": 12000
+    },
+    {
+      "desc": "Investigations (CBC, USG abdomen)",
+      "category": "diagnostics",
+      "qty": 1,
+      "amount": 8800
+    },
+    {
+      "desc": "Gloves",
+      "category": "consumables",
+      "qty": 1,
+      "amount": 450
+    },
+    {
+      "desc": "Mask",
+      "category": "consumables",
+      "qty": 1,
+      "amount": 250
+    },
+    {
+      "desc": "Laundry charges",
+      "category": "misc",
+      "qty": 1,
+      "amount": 300
+    },
+    {
+      "desc": "Telephone charges",
+      "category": "misc",
+      "qty": 1,
+      "amount": 200
+    }
+  ],
+  "policy": {
+    "limits": {
+      "policy_id": "ASJ-01",
+      "name": "Arogya Sanjeevani (standard wording)",
+      "source": "IFFCO Tokio Arogya Sanjeevani Policy wording, UIN IFFHLIP20161V011920 (https://www.iffcotokio.co.in/content/dam/iffcotokio/iffco-pdf/policy-wordings-arogya-sanjeevani-policy.pdf). Numbers and section ids follow this wording; the PDF goes in data/corpus/policies/ASJ-01/ (see data/corpus/SOURCES.md).",
+      "inception_date": "2026-01-01",
+      "sum_insured": 500000,
+      "room_cap_per_day": 5000,
+      "icu_cap_per_day": 10000,
+      "copay_pct": 5,
+      "sub_limits": {
+        "cataract_per_eye": 40000,
+        "modern_treatments": 250000
+      },
+      "waiting_periods": {
+        "initial_days": 30,
+        "specific_conditions_months": 24,
+        "pre_existing_months": 36,
+        "joint_replacement_months": 48
+      },
+      "specific_conditions": [
+        "benign ENT disorders",
+        "tonsillectomy",
+        "adenoidectomy",
+        "mastoidectomy",
+        "tympanoplasty",
+        "hysterectomy",
+        "benign tumours, cysts and polyps (incl. benign breast lumps)",
+        "benign prostate hypertrophy",
+        "cataract and age-related eye ailments",
+        "gastric or duodenal ulcer",
+        "gout and rheumatism",
+        "hernia of all types",
+        "hydrocele",
+        "non-infective arthritis",
+        "piles, fissures and fistula in anus",
+        "pilonidal sinus, sinusitis and related disorders",
+        "prolapsed intervertebral disc and spinal diseases (unless accident)",
+        "calculi in urinary system, gall bladder and bile duct",
+        "varicose veins and varicose ulcers"
+      ],
+      "condition_terms": {
+        "benign ENT disorders": [
+          "benign ent",
+          "deviated nasal septum",
+          "nasal polyp"
+        ],
+        "tonsillectomy": [
+          "tonsillectomy",
+          "tonsillitis"
+        ],
+        "adenoidectomy": [
+          "adenoidectomy",
+          "adenoid"
+        ],
+        "mastoidectomy": [
+          "mastoidectomy",
+          "mastoiditis"
+        ],
+        "tympanoplasty": [
+          "tympanoplasty"
+        ],
+        "hysterectomy": [
+          "hysterectomy"
+        ],
+        "benign tumours, cysts and polyps (incl. benign breast lumps)": [
+          "benign tumour",
+          "benign tumor",
+          "cyst",
+          "polyp",
+          "fibroadenoma",
+          "lipoma",
+          "breast lump"
+        ],
+        "benign prostate hypertrophy": [
+          "prostate hypertrophy",
+          "prostatic hyperplasia",
+          "bph"
+        ],
+        "cataract and age-related eye ailments": [
+          "cataract"
+        ],
+        "gastric or duodenal ulcer": [
+          "gastric ulcer",
+          "duodenal ulcer",
+          "peptic ulcer"
+        ],
+        "gout and rheumatism": [
+          "gout",
+          "rheumatism"
+        ],
+        "hernia of all types": [
+          "hernia",
+          "hernioplasty",
+          "herniorrhaphy"
+        ],
+        "hydrocele": [
+          "hydrocele"
+        ],
+        "non-infective arthritis": [
+          "non-infective arthritis",
+          "rheumatoid arthritis"
+        ],
+        "piles, fissures and fistula in anus": [
+          "piles",
+          "haemorrhoid",
+          "hemorrhoid",
+          "fissure",
+          "fistula"
+        ],
+        "pilonidal sinus, sinusitis and related disorders": [
+          "pilonidal",
+          "sinusitis"
+        ],
+        "prolapsed intervertebral disc and spinal diseases (unless accident)": [
+          "intervertebral disc",
+          "disc prolapse",
+          "slipped disc",
+          "spondylosis"
+        ],
+        "calculi in urinary system, gall bladder and bile duct": [
+          "calculi",
+          "calculus",
+          "kidney stone",
+          "renal stone",
+          "ureteric stone",
+          "gall stone",
+          "gallstone",
+          "cholelithiasis",
+          "choledocholithiasis"
+        ],
+        "varicose veins and varicose ulcers": [
+          "varicose"
+        ]
+      },
+      "joint_replacement_terms": [
+        "joint replacement",
+        "knee replacement",
+        "hip replacement",
+        "arthroplasty",
+        "osteoarthritis",
+        "osteoporosis"
+      ],
+      "pre_hospitalisation_days": 30,
+      "post_hospitalisation_days": 60,
+      "clause_refs": {
+        "room_rent": "ASJ-01:4.1.i",
+        "icu": "ASJ-01:4.1.ii",
+        "proportionate_deduction": "ASJ-01:4.1.1.note2",
+        "cataract": "ASJ-01:4.3",
+        "modern_treatments": "ASJ-01:4.6",
+        "non_payable_items": "IRDAI:List-I",
+        "pre_existing": "ASJ-01:6.1",
+        "initial_waiting": "ASJ-01:6.2.i",
+        "specific_conditions": "ASJ-01:6.3.i",
+        "joint_replacement": "ASJ-01:6.3.ii",
+        "copay": "ASJ-01:9.3"
+      }
+    },
+    "clauses": [
+      {
+        "clause_id": "ASJ-01:13.iii",
+        "text": "iii. Dependent Children (i.e. natural or legally adopted) between the age 3 months to 25\nyears. If the child above 18 years of age is financially independent, he or she shall be\nineligible for coverage in the subsequent renewals\nFor Yearly payment of mode, a fixed period of 30 days is to be allowed as Grace Period and\nGrace Period\nfor all other modes of payment a fixed period of 15 days be allowed as grace period.\nExpenses of Hospitalization for a minimum period of 24 consecutive hours only shall be\nHospitalisation admissible\nExpenses\nTime limit of 24 hrs shall not apply when the treatment is undergone in a Day Care Centre.\nPre Hospitalisation For 30 days prior to the date of hospitalization\nPost\nHospitalisation For 60 days from the date of discharge from the hospital\n1. Room Rent, Boarding, Nursing Expenses all inclusive as provided by the Hospital /\nNursing Home up to 2% of the sum insured subject to maximum of Rs.5000/- per day.\nSublimit for\n2.Intensive Care Unit (ICU) charges/ Intensive Cardiac Care Unit (ICCU) charges all\nroom/doctors fee\ninclusive as provided by the Hospital / Nursing Home up to 5% of the sum insured subject\nto maximum of Rs.10,000/-, per day\nCataract Up to 25% of Sum insured or Rs.40,000/-, whichever is lower, per eye, under one policy\nTreatment year.\nExpenses incurred for Inpatient Care treatment under Ayurveda, Yoga and Naturopathy,\nAYUSH Unani, Siddha and Homeopathy systems of medicines shall be covered upto sum insured,\nduring each Policy year as specified in the policy schedule.\nPre Existing Only PEDs declared in the Proposal Form and accepted for coverage by the company shall\nDisease be covered after a waiting period of 3 years\nIncrease in the sum insured by 5% in respect of each claim free year subject to a maximum\nCumulative bonus of 50% of SI. In the event of claim the cumulative bonus shall be reduced at the same rate.\nCo Pay 5% co pay on all claims",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:3.11",
+        "text": "3.11. Co-payment means a cost sharing requirement under a health insurance policy that provides that the\npolicyholder/insured will bear a specified percentage of the admissible claims amount. A co-payment does not\nreduce the Sum Insured.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:3.31",
+        "text": "3.31. Migration means a facility provided to policyholders (including all members under family cover and group\npolicies), to transfer the credits gained to the extent of the Sum Insured, No Claim Bonus, specific waiting periods,\nwaiting period for pre-existing diseases, moratorium period, etc. and from one health insurance policy to another\nwith the same insurer.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:3.42",
+        "text": "3.42. Portability means a facility provided to the health insurance policyholders (including all members under family\ncover), to transfer the credits gained to the extent of the Sum Insured, No Claim Bonus, specific waiting periods,\nwaiting period for pre-existing diseases, moratorium period, etc. from the existing insurer to acquiring insurer.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:3.44",
+        "text": "3.44. Renewal: Means the terms on which the contract of insurance can be renewed on mutual consent with a\nprovision of grace period for treating the renewal continuous for the purpose of gaining credit for sum insured,\ncumulative bonus, specific waiting periods, waiting periods for pre-existing diseases, moratorium periods etc.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:4.1.1.note2",
+        "text": "2. In case of admission to a room/ICU/ICCU at rates exceeding the aforesaid limits, the reimbursement/payment of all\nother expenses incurred at the Hospital, with the exception of cost of medicines, shall be effected in the same proportion\nas the admissible rate per day bears to the actual rate per day of Room Rent/ICU/ICCU charges.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:6.1",
+        "text": "6.1. Pre-Existing Diseases(Code- Excl01)\na) Expenses related to the treatment of a pre-existing Disease (PED) and its direct complications shall be excluded\nuntil the expiry of 36 months of continuous coverage after the date of inception of the first policy with us.\nb) In case of enhancement of sum insured the exclusion shall apply afresh to the extent of sum insured increase.\nc) If the Insured Person is continuously covered without any break as defined under the portability norms of the\nextant IRDAI (Health Insurance) Regulations then waiting period for the same would be reduced to the extent of\nprior coverage.\nd) Coverage under the policy after the expiry of 36 months for any pre-existing disease is subject to the same being\ndeclared at the time of application and accepted by us.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:6.3",
+        "text": "6.3. Specific Waiting Period: (Code- Excl02)\na) Expenses related to the treatment of the following listed conditions, surgeries/treatments shall be excluded until the\nexpiry of 24/36 months of continuous coverage, as may be the case after the date of inception of the first policy with\nthe insurer. This exclusion shall not be applicable for claims arising due to an accident.\nb) In case of enhancement of sum insured the exclusion shall apply afresh to the extent of sum insured increase.\nc) If any of the specified disease/procedure falls under the waiting period specified for pre-existing diseases, then the\nlonger of the two waiting periods shall apply.\nd) The waiting period for listed conditions shall apply even if contracted after the policy or declared and accepted without\na specific exclusion.\ne) If the Insured Person is continuously covered without any break as defined under the applicable norms on portability\nstipulated by IRDAI, then waiting period for the same would be reduced to the extent of prior coverage.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:9.3",
+        "text": "9.3 Co-payment\nEach and every claim under the Policy shall be subject to a Co-payment of 5% applicable to claim amount admissible\nand payable as per the terms and conditions of the Policy. The amount payable shall be after deduction of the co-\npayment.",
+        "score": 1.0
+      },
+      {
+        "clause_id": "IRDAI:List-I",
+        "text": "List I – Items for which coverage is not available in the policy\nSl Item\nNo\n1 BABY FOOD\n2 BABY UTILITIES CHARGES\n3 BEAUTY SERVICES\n4 BELTS/ BRACES\n5 BUDS\n6 COLD PACK/HOT PACK\n7 CARRY BAGS\n8 EMAIL / INTERNET CHARGES\n9 FOOD CHARGES (OTHER THAN PATIENT's DIET PROVIDED BY HOSPITAL)\n10 LEGGINGS\n11 LAUNDRY CHARGES\n12 MINERAL WATER\n13 SANITARY PAD\n14 TELEPHONE CHARGES\n15 GUEST SERVICES\n16 CREPE BANDAGE\n17 DIAPER OF ANY TYPE\n18 EYELET COLLAR\n19 SLINGS\n20 BLOOD GROUPING AND CROSS MATCHING OF DONORS SAMPLES\n21 SERVICE CHARGES WHERE NURSING CHARGE ALSO CHARGED\n22 Television Charges\n23 SURCHARGES\n24 ATTENDANT CHARGES\n25 EXTRA DIET OF PATIENT (OTHER THAN THAT WHICH FORMS PART OF BED CHARGE)\n26 BIRTH CERTIFICATE\n27 CERTIFICATE CHARGES\n28 COURIER CHARGES\n29 CONVEYANCE CHARGES\n30 MEDICAL CERTIFICATE\n31 MEDICAL RECORDS\n32 PHOTOCOPIES CHARGES\n33 MORTUARY CHARGES\n34 WALKING AIDS CHARGES\n35 OXYGEN CYLINDER (FOR USAGE OUTSIDE THE HOSPITAL)\n36 SPACER\n37 SPIROMETRE\n38 NEBULIZER KIT\n39 STEAM INHALER\n40 ARMSLING\n41 THERMOMETER\n42 CERVICAL COLLAR\n43 SPLINT\n44 DIABETIC FOOT WEAR\n45 KNEE BRACES (LONG/ SHORT/ HINGED)\n46 KNEE IMMOBILIZER/SHOULDER IMMOBILIZER\n47 LUMBO SACRAL BELT\n48 NIMBUS BED OR WATER OR AIR BED CHARGES\n49 AMBULANCE COLLAR\n50 AMBULANCE EQUIPMENT\n51 ABDOMINAL BINDER\n52 PRIVATE NURSES CHARGES- SPECIAL NURSING CHARGES\n53 SUGAR FREE Tablets\n54 CREAMS POWDERS LOTIONS (Toiletries are not payable, only prescribed medical pharmaceuticals\npayable)\n55 ECG ELECTRODES\n56 GLOVES\n57 NEBULISATION KIT\n58 ANY KIT WITH NO DETAILS MENTIONED [DELIVERY KIT, ORTHOKIT, RECOVERY KIT, ETC]\n59 KIDNEY TRAY\n60 MASK\n61 OUNCE GLASS\n62 OXYGEN MASK\n63 PELVIC TRACTION BELT\n64 PAN CAN\n65 TROLLY COVER\n66 UROMETER, URINE JUG\n67 AMBULANCE\n68 VASOFIX SAFETY",
+        "score": 1.0
+      },
+      {
+        "clause_id": "IRDAI:List-II",
+        "text": "List II – Items that are to be subsumed into Room Charges\nSl Item\nNo\n1 BABY CHARGES (UNLESS SPECIFIED/INDICATED)\n2 HAND WASH\n3 SHOE COVER\n4 CAPS\n5 CRADLE CHARGES\n6 COMB\n7 EAU-DE-COLOGNE / ROOM FRESHNERS\n8 FOOT COVER\n9 GOWN\n10 SLIPPERS\n11 TISSUE PAPER\n12 TOOTH PASTE\n13 TOOTH BRUSH\n14 BED PAN\n15 FACE MASK\n16 FLEXI MASK\n17 HAND HOLDER\n18 SPUTUM CUP\n19 DISINFECTANT LOTIONS\n20 LUXURY TAX\n21 HVAC\n22 HOUSE KEEPING CHARGES\n23 AIR CONDITIONER CHARGES\n24 IM IV INJECTION CHARGES\n25 CLEAN SHEET\n26 BLANKET/WARMER BLANKET\n27 ADMISSION KIT\n28 DIABETIC CHART CHARGES\n29 DOCUMENTATION CHARGES / ADMINISTRATIVE EXPENSES\n30 DISCHARGE PROCEDURE CHARGES\n31 DAILY CHART CHARGES\n32 ENTRANCE PASS / VISITORS PASS CHARGES\n33 EXPENSES RELATED TO PRESCRIPTION ON DISCHARGE\n34 FILE OPENING CHARGES\n35 INCIDENTAL EXPENSES / MISC. CHARGES (NOT EXPLAINED)\n36 PATIENT IDENTIFICATION BAND / NAME TAG\n37 PULSEOXYMETER CHARGES",
+        "score": 1.0
+      },
+      {
+        "clause_id": "IRDAI:List-III",
+        "text": "List III – Items that are to be subsumed into Procedure Charges\nSl Item\nNo.\n1 HAIR REMOVAL CREAM\n2 DISPOSABLES RAZORS CHARGES (for site preparations)\n3 EYE PAD\n4 EYE SHEILD\n5 CAMERA COVER\n6 DVD, CD CHARGES\n7 GAUSE SOFT\n8 GAUZE\n9 WARD AND THEATRE BOOKING CHARGES\n10 ARTHROSCOPY AND ENDOSCOPY INSTRUMENTS\n11 MICROSCOPE COVER\n12 SURGICAL BLADES, HARMONICSCALPEL,SHAVER\n13 SURGICAL DRILL\n14 EYE KIT\n15 EYE DRAPE\n16 X-RAY FILM\n17 BOYLES APPARATUS CHARGES\n18 COTTON\n19 COTTON BANDAGE\n20 SURGICAL TAPE\n21 APRON\n22 TORNIQUET\n23 ORTHOBUNDLE, GYNAEC BUNDLE",
+        "score": 1.0
+      },
+      {
+        "clause_id": "IRDAI:List-IV",
+        "text": "List IV – Items that are to be subsumed into costs of treatment\nSl Item\nNo.\n1 ADMISSION/REGISTRATION CHARGES\n2 HOSPITALISATION FOR EVALUATION/ DIAGNOSTIC PURPOSE\n3 URINE CONTAINER\n4 BLOOD RESERVATION CHARGES AND ANTE NATAL BOOKING CHARGES\n5 BIPAP MACHINE\n6 CPAP/ CAPD EQUIPMENTS\n7 INFUSION PUMP– COST\n8 HYDROGEN PEROXIDE\\SPIRIT\\ DISINFECTANTS ETC\n9 NUTRITION PLANNING CHARGES - DIETICIAN CHARGES- DIET CHARGES\n10 HIV KIT\n11 ANTISEPTIC MOUTHWASH\n12 LOZENGES\n13 MOUTH PAINT\n14 VACCINATION CHARGES\n15 ALCOHOL SWABES\n16 SCRUB SOLUTION/STERILLIUM\n17 Glucometer & Strips\n18 URINE BAG",
+        "score": 1.0
+      },
+      {
+        "clause_id": "ASJ-01:4.1.i",
+        "text": "i. Room Rent, Boarding, Nursing Expenses as provided by the Hospital / Nursing Home up to 2% of the sum insured\nsubject to maximum of Rs.5000/-, per day.",
+        "score": 0.87
+      },
+      {
+        "clause_id": "ASJ-01:3.26",
+        "text": "3.26. ICU (Intensive Care Unit) Charges means the amount charged by a Hospital towards ICU expenses on a per\nday basis which shall include the expenses for ICU bed, general medical support services provided to any ICU\npatient including monitoring devices, critical care nursing and intensivist charges.",
+        "score": 0.863
+      },
+      {
+        "clause_id": "ASJ-01:4.1.ii",
+        "text": "ii. Intensive Care Unit (ICU) / Intensive Cardiac Care Unit (ICCU) expenses up to 5% of sum insured subject to maximum\nof Rs.10,000/- per day.",
+        "score": 0.863
+      },
+      {
+        "clause_id": "ASJ-01:3.45",
+        "text": "3.45. Room Rent means the amount charged by a hospital towards Room and Boarding expenses and shall include\nthe associated medical expenses.",
+        "score": 0.634
+      },
+      {
+        "clause_id": "ASJ-01:3.19",
+        "text": "3.19. Grace period means the specified period of time, immediately following the premium due date during which\npremium payment can be made to renew or continue a policy in force without loss of continuity benefits ( sum\ninsured, cumulative bonus, specific waiting periods, waiting periods for pre-existing diseases, moratorium periods\netc.) accrued under the policy. The grace period for payment of the premium shall be:\na) fifteen days for monthly installment modes, (wherever applicable)\nb) thirty days for any other installment modes (wherever applicable)\nc) thirty days for renewal.\nProvided,\na) the coverage shall be available during the grace period, wherever the premium payment is paid in installments.\n(wherever applicable)\nb) Coverage is not available during the period for which no premium is received after the expiry of the Policy.",
+        "score": 0.598
+      },
+      {
+        "clause_id": "ASJ-01:6.2.i",
+        "text": "i. Expenses related to the treatment of any illness within 30 days from the first policy commencement date shall be\nexcluded except claims arising due to an accident, provided the same are covered.",
+        "score": 0.513
+      },
+      {
+        "clause_id": "ASJ-01:3.25",
+        "text": "3.25. Intensive Care Unit means an identified section, ward or wing of a hospital which is under the constant\nsupervision of a dedicated medical practitioner(s), and which is specially equipped for the continuous monitoring\nand treatment of patients who are in a critical condition, or require life support facilities and where the level of care\nand supervision is considerably more sophisticated and intensive than in the ordinary and other wards.",
+        "score": 0.498
+      },
+      {
+        "clause_id": "ASJ-01:5",
+        "text": "5 Cumulative Bonus (CB)\nCumulative Bonus will be increased by 5% in respect of each claim free policy year (where no claims are reported),\nprovided the policy is renewed with the company without a break subject to maximum of 50% of the sum insured under\nthe current policy year. If a claim is made in any particular year, the cumulative bonus accrued shall be reduced at the\nsame rate at which it has accrued. However, sum insured will be maintained and will not be reduced in the policy year.\ni. In case where the policy is on individual basis, the CB shall be added and available individually to the insured person\nif no claim has been reported. CB shall reduce only in case of claim from the same Insured Person.\nii. In case where the policy is on floater basis, the CB shall be added and available to the family on floater basis, provided\nno claim has been reported from any member of the family. CB shall reduce in case of claim from any of the Insured\nPersons.\niii. CB shall be available only if the Policy is renewed/ premium paid within the Grace Period.\niv. If the Insured Persons in the expiring policy are covered on an individual basis as specified in the Policy Schedule and\nthere is an accumulated CB for such Insured Person under the expiring policy, and such expiring policy has been\nRenewed on a floater policy basis as specified in the Policy Schedule then the CB to be carried forward for credit in\nsuch Renewed Policy shall be the one that is applicable to the lowest among all the Insured Persons\nv. In case of floater policies where Insured Persons Renew their expiring policy by splitting the Sum Insured in to two or\nmore floater policies/individual policies or in cases where the policy is split due to the child attaining the age of 25\nyears, the CB of the expiring policy shall be apportioned to such Renewed Policies in the proportion of the Sum Insured\nof each Renewed Policy\nvi. If the Sum Insured has been reduced at the time of Renewal, the applicable CB shall be reduced in the same proportion\nto the Sum Insured in current Policy.\nvii. If the Sum Insured under the Policy has been increased at the time of Renewal the CB shall be calculated on the Sum\nInsured of the last completed Policy Year.\nviii. If a claim is made in the expiring Policy Year, and is notified to Us after the acceptance of Renewal premium any\nawarded CB shall be withdrawn",
+        "score": 0.463
+      },
+      {
+        "clause_id": "ASJ-01:3.36.ii",
+        "text": "ii. The In-patient Hospitalisation claim for such Hospitalisation is admissible by the Insurance Company.",
+        "score": 0.457
+      },
+      {
+        "clause_id": "ASJ-01:3.37.ii",
+        "text": "ii. The inpatient hospitalisation claim for such hospitalisation is admissible by the Insurance Company.",
+        "score": 0.457
+      }
+    ]
+  },
+  "fraud": {
+    "score": 0,
+    "reasons": [],
+    "details": [],
+    "waiting_period": {
+      "excluded": false,
+      "rule": null,
+      "condition": null,
+      "clause_id": null,
+      "waiting_ends": null,
+      "accident": false
+    }
+  },
+  "cost": {
+    "deductions": [
+      {
+        "item": "Gloves",
+        "amount": 450,
+        "reason": "non-payable item",
+        "clause_id": "IRDAI:List-I"
+      },
+      {
+        "item": "Mask",
+        "amount": 250,
+        "reason": "non-payable item",
+        "clause_id": "IRDAI:List-I"
+      },
+      {
+        "item": "Laundry charges",
+        "amount": 300,
+        "reason": "non-payable item",
+        "clause_id": "IRDAI:List-I"
+      },
+      {
+        "item": "Telephone charges",
+        "amount": 200,
+        "reason": "non-payable item",
+        "clause_id": "IRDAI:List-I"
+      },
+      {
+        "item": "Co-payment 5%",
+        "amount": 4190,
+        "reason": "5% co-payment on admissible claim",
+        "clause_id": "ASJ-01:9.3"
+      }
+    ],
+    "payable": 79610,
+    "overclaim": false
+  },
+  "decision": {
+    "verdict": "approve",
+    "payout": 79610,
+    "clauses": [
+      "IRDAI:List-I",
+      "ASJ-01:9.3"
+    ],
+    "rationale": "Approved: payable ₹79,610 of ₹85,000 claimed; deductions: Gloves ₹450 (IRDAI:List-I); Mask ₹250 (IRDAI:List-I); Laundry charges ₹300 (IRDAI:List-I); Telephone charges ₹200 (IRDAI:List-I); Co-payment 5% ₹4,190 (ASJ-01:9.3).",
+    "confidence": 1.0,
+    "escalation_reasons": []
+  },
+  "human": {
+    "ticket": null,
+    "reviewer": null,
+    "verdict": null,
+    "note": null,
+    "payout": null
+  },
+  "letters": null,
+  "halt": null,
+  "trace": [
+    {
+      "ts": "2026-11-10T18:07:21.062Z",
+      "agent": "workflow",
+      "action": "reset"
+    },
+    {
+      "ts": "2026-11-10T18:07:22.151Z",
+      "agent": "intake_agent",
+      "action": "write",
+      "section": "intake"
+    },
+    {
+      "ts": "2026-11-10T18:07:22.164Z",
+      "agent": "intake_agent",
+      "action": "write",
+      "section": "bill_items"
+    },
+    {
+      "ts": "2026-11-10T18:07:22.179Z",
+      "agent": "workflow",
+      "action": "status",
+      "from": "intake",
+      "to": "assessing"
+    },
+    {
+      "ts": "2026-11-10T18:07:22.195Z",
+      "agent": "policy_agent",
+      "action": "write",
+      "section": "policy"
+    },
+    {
+      "ts": "2026-11-10T18:07:22.218Z",
+      "agent": "fraud_agent",
+      "action": "write",
+      "section": "fraud"
+    },
+    {
+      "ts": "2026-11-10T18:07:22.250Z",
+      "agent": "cost_agent",
+      "action": "write",
+      "section": "cost"
+    },
+    {
+      "ts": "2026-11-10T18:07:23.283Z",
+      "agent": "policy_agent",
+      "action": "write",
+      "section": "policy"
+    },
+    {
+      "ts": "2026-11-10T18:07:23.303Z",
+      "agent": "manager_agent",
+      "action": "write",
+      "section": "decision"
+    },
+    {
+      "ts": "2026-11-10T18:07:23.317Z",
+      "agent": "manager_agent",
+      "action": "status",
+      "from": "assessing",
+      "to": "decided"
+    },
+    {
+      "ts": "2026-11-10T18:07:23.329Z",
+      "agent": "manager_agent",
+      "action": "status",
+      "from": "decided",
+      "to": "closed"
+    }
+  ]
+}

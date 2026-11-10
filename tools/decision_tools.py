@@ -166,21 +166,25 @@ def review_queue(open_only: bool = True) -> list[dict[str, Any]]:
 def create_review_ticket(claim_id: str, summary: str) -> dict[str, Any]:
     """Add the claim to ``review_queue.json`` with a one-paragraph summary.
 
-    One open ticket per claim (calling again returns it). Also writes the ticket id into the
-    record's ``human`` section and logs the step. Returns the ticket.
+    One open ticket per claim: calling again (e.g. a re-run of a claim still waiting for a
+    reviewer) reuses that ticket and refreshes its summary. Either way the ticket id is written
+    into the record's ``human`` section — a re-run resets the record, so it must be written
+    again — and the step is logged. Returns the ticket.
     """
     with _QUEUE_LOCK:
         queue = _read_queue()
-        for t in queue:
-            if t["claim_id"] == claim_id and t["status"] == "open":
-                return t
-        ticket = {"ticket": f"RV-{len(queue) + 1:04d}", "claim_id": claim_id, "summary": summary,
-                  "status": "open", "opened": utc_now(), "closed": None}
-        queue.append(ticket)
+        ticket = next((t for t in queue if t["claim_id"] == claim_id and t["status"] == "open"), None)
+        reused = ticket is not None
+        if ticket is None:
+            ticket = {"ticket": f"RV-{len(queue) + 1:04d}", "claim_id": claim_id, "summary": summary,
+                      "status": "open", "opened": utc_now(), "closed": None}
+            queue.append(ticket)
+        else:
+            ticket["summary"] = summary
         _write_queue(queue)
     write_state(claim_id, "human", HumanSection(ticket=ticket["ticket"]), agent="human_desk")
     append_log({"claim_id": claim_id, "agent": "human_desk", "tool": "create_review_ticket",
-                "summary": f"ticket {ticket['ticket']} opened"})
+                "summary": f"ticket {ticket['ticket']} {'reused (claim re-run)' if reused else 'opened'}"})
     return ticket
 
 

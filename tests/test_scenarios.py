@@ -133,3 +133,13 @@ def test_run_log_is_append_only(runtime):
                         "CLM-0005": {"intake_agent", *DOWNSTREAM, "human_desk"}}.items():
         assert agents <= {e["agent"] for e in read_log(cid)}, f"every agent must appear in {cid}'s trace"
         assert {t["agent"] for t in read_state(cid)["trace"]} >= agents - {"human_desk"} | {"workflow"}
+
+
+def test_rerun_of_an_escalated_claim_keeps_its_review_ticket():
+    """A claim still waiting for a reviewer can be re-run (e.g. from the demo website) and reviewed."""
+    first = run("CLM-0004")
+    again = run("CLM-0004")
+    assert again["status"] == "escalated"
+    assert again["human"]["ticket"] == first["human"]["ticket"]       # same ticket, written back
+    rec = human_desk.review("CLM-0004", "approve", "Re-run checked; approve.", reviewer="Test Reviewer")
+    assert rec["status"] == "closed"

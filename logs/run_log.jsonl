@@ -1,0 +1,286 @@
+{"ts": "2026-11-10T18:07:21.062Z", "claim_id": "CLM-0001", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:07:21.075Z", "claim_id": "CLM-0001", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:07:21.080Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:07:21.083Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "extract_claim_fields", "summary": "policy ASJ-01, claimed 85000, diagnosis: acute appendicitis; laparoscopic appendectomy"}
+{"ts": "2026-11-10T18:07:22.137Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "reconcile_fields", "summary": "groq (qwen/qwen3.8-27b): 10 fields agree · groq: 884/900 requests, 84,743/90,000 tokens left today", "llm": {"provider": "groq", "model": "qwen/qwen3.8-27b", "tokens": 455, "budget_left": {"requests_per_day": 884, "tokens_per_day": 84743, "requests_per_minute": 24, "tokens_per_minute": 6545}, "agreed": ["policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis", "room_type", "claimed", "bill_number", "accident"], "filled": [], "mismatches": {}, "errors": []}}
+{"ts": "2026-11-10T18:07:22.141Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "validate_policy", "summary": "ASJ-01 found in policies.json"}
+{"ts": "2026-11-10T18:07:22.142Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "parse_bill", "summary": "11 line items, total 85000"}
+{"ts": "2026-11-10T18:07:22.151Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "write_state", "section": "intake", "summary": "wrote intake"}
+{"ts": "2026-11-10T18:07:22.164Z", "claim_id": "CLM-0001", "agent": "intake_agent", "tool": "write_state", "section": "bill_items", "summary": "wrote bill_items"}
+{"ts": "2026-11-10T18:07:22.179Z", "claim_id": "CLM-0001", "agent": "workflow", "tool": "set_status", "summary": "status intake -> assessing"}
+{"ts": "2026-11-10T18:07:22.181Z", "claim_id": "CLM-0001", "agent": "workflow", "tool": "fan-out", "summary": "Policy Retrieval and Fraud Signal start together"}
+{"ts": "2026-11-10T18:07:22.192Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "start", "summary": "limits + clauses for ASJ-01"}
+{"ts": "2026-11-10T18:07:22.193Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "get_policy_limits", "summary": "SI 500000, room cap 5000/day, co-pay 5%"}
+{"ts": "2026-11-10T18:07:22.195Z", "claim_id": "CLM-0001", "agent": "fraud_agent", "tool": "start", "summary": "risk rules + prior-claim memory"}
+{"ts": "2026-11-10T18:07:22.199Z", "claim_id": "CLM-0001", "agent": "fraud_agent", "tool": "lookup_prior_claims", "summary": "0 earlier claims by PH-1001"}
+{"ts": "2026-11-10T18:07:22.195Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:07:22.205Z", "claim_id": "CLM-0001", "agent": "fraud_agent", "tool": "check_waiting_period", "summary": "no waiting period applies"}
+{"ts": "2026-11-10T18:07:22.206Z", "claim_id": "CLM-0001", "agent": "fraud_agent", "tool": "score_risk", "summary": "score 0 []"}
+{"ts": "2026-11-10T18:07:22.218Z", "claim_id": "CLM-0001", "agent": "fraud_agent", "tool": "write_state", "section": "fraud", "summary": "wrote fraud"}
+{"ts": "2026-11-10T18:07:22.238Z", "claim_id": "CLM-0001", "agent": "cost_agent", "tool": "start", "summary": "11 bill lines against ASJ-01 limits"}
+{"ts": "2026-11-10T18:07:22.247Z", "claim_id": "CLM-0001", "agent": "cost_agent", "tool": "classify_items", "summary": "not payable: ['Gloves', 'Mask', 'Laundry charges', 'Telephone charges']"}
+{"ts": "2026-11-10T18:07:22.247Z", "claim_id": "CLM-0001", "agent": "cost_agent", "tool": "room_rent_deduction", "summary": "cuts: none"}
+{"ts": "2026-11-10T18:07:22.249Z", "claim_id": "CLM-0001", "agent": "cost_agent", "tool": "compute_payable", "summary": "payable 79610 of 85000; over-claim False"}
+{"ts": "2026-11-10T18:07:22.250Z", "claim_id": "CLM-0001", "agent": "cost_agent", "tool": "write_state", "section": "cost", "summary": "wrote cost"}
+{"ts": "2026-11-10T18:07:23.261Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'room rent boarding nursing expenses per day limit' -> ['ASJ-01:4.1.i', 'ASJ-01:3.45', 'ASJ-01:4.1.1.note2']"}
+{"ts": "2026-11-10T18:07:23.263Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'intensive care unit ICU expenses per day limit' -> ['ASJ-01:4.1.ii', 'ASJ-01:3.26', 'ASJ-01:3.25']"}
+{"ts": "2026-11-10T18:07:23.263Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'rates exceeding limits proportion other expenses' -> ['ASJ-01:4.1.1.note2', 'ASJ-01:5']"}
+{"ts": "2026-11-10T18:07:23.264Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'co-payment admissible claim' -> ['ASJ-01:9.3', 'ASJ-01:3.11', 'ASJ-01:3.36.ii']"}
+{"ts": "2026-11-10T18:07:23.265Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'first thirty days waiting period illness' -> ['ASJ-01:6.2.i', 'ASJ-01:3.19', 'ASJ-01:6.3']"}
+{"ts": "2026-11-10T18:07:23.266Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'pre-existing disease waiting period' -> ['ASJ-01:6.1', 'ASJ-01:3.42', 'ASJ-01:3.44']"}
+{"ts": "2026-11-10T18:07:23.269Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items for which coverage is not available' -> ['IRDAI:List-I']"}
+{"ts": "2026-11-10T18:07:23.269Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into room charges' -> ['IRDAI:List-II']"}
+{"ts": "2026-11-10T18:07:23.270Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'subsumed into procedure charges' -> ['IRDAI:List-III']"}
+{"ts": "2026-11-10T18:07:23.270Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into costs of treatment' -> ['IRDAI:List-IV']"}
+{"ts": "2026-11-10T18:07:23.270Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "done", "summary": "23 clauses above the similarity threshold"}
+{"ts": "2026-11-10T18:07:23.283Z", "claim_id": "CLM-0001", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:07:23.289Z", "claim_id": "CLM-0001", "agent": "workflow", "tool": "fan-in", "summary": "policy, fraud and cost signals in; Manager decides"}
+{"ts": "2026-11-10T18:07:23.300Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "start", "summary": "fan-in: policy, fraud and cost signals"}
+{"ts": "2026-11-10T18:07:23.302Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "apply_decision_rules", "summary": "approve payout 79610"}
+{"ts": "2026-11-10T18:07:23.302Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "verify_citations", "summary": "cited ['IRDAI:List-I', 'ASJ-01:9.3'] — all retrieved"}
+{"ts": "2026-11-10T18:07:23.303Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "write_state", "section": "decision", "summary": "wrote decision"}
+{"ts": "2026-11-10T18:07:23.317Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "set_status", "summary": "status assessing -> decided"}
+{"ts": "2026-11-10T18:07:23.329Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "set_status", "summary": "status decided -> closed"}
+{"ts": "2026-11-10T18:07:23.332Z", "claim_id": "CLM-0001", "agent": "manager_agent", "tool": "write_decision", "summary": "status closed"}
+{"ts": "2026-11-10T18:07:23.332Z", "claim_id": "CLM-0001", "agent": "workflow", "tool": "done", "summary": "status closed"}
+{"ts": "2026-11-10T18:07:45.058Z", "claim_id": "CLM-0002", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:07:45.063Z", "claim_id": "CLM-0002", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:07:45.065Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:07:45.066Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "extract_claim_fields", "summary": "policy ASJ-01, claimed 72000, diagnosis: acute pancreatitis"}
+{"ts": "2026-11-10T18:07:45.943Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "reconcile_fields", "summary": "groq (qwen/qwen3.8-27b): 10 fields agree · groq: 883/900 requests, 84,304/90,000 tokens left today", "llm": {"provider": "groq", "model": "qwen/qwen3.8-27b", "tokens": 439, "budget_left": {"requests_per_day": 883, "tokens_per_day": 84304, "requests_per_minute": 23, "tokens_per_minute": 6106}, "agreed": ["policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis", "room_type", "claimed", "bill_number", "accident"], "filled": [], "mismatches": {}, "errors": []}}
+{"ts": "2026-11-10T18:07:45.944Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "validate_policy", "summary": "ASJ-01 found in policies.json"}
+{"ts": "2026-11-10T18:07:45.945Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "parse_bill", "summary": "6 line items, total 72000"}
+{"ts": "2026-11-10T18:07:45.953Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "write_state", "section": "intake", "summary": "wrote intake"}
+{"ts": "2026-11-10T18:07:45.962Z", "claim_id": "CLM-0002", "agent": "intake_agent", "tool": "write_state", "section": "bill_items", "summary": "wrote bill_items"}
+{"ts": "2026-11-10T18:07:45.975Z", "claim_id": "CLM-0002", "agent": "workflow", "tool": "set_status", "summary": "status intake -> assessing"}
+{"ts": "2026-11-10T18:07:45.975Z", "claim_id": "CLM-0002", "agent": "workflow", "tool": "fan-out", "summary": "Policy Retrieval and Fraud Signal start together"}
+{"ts": "2026-11-10T18:07:45.986Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "start", "summary": "limits + clauses for ASJ-01"}
+{"ts": "2026-11-10T18:07:45.986Z", "claim_id": "CLM-0002", "agent": "fraud_agent", "tool": "start", "summary": "risk rules + prior-claim memory"}
+{"ts": "2026-11-10T18:07:45.987Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "get_policy_limits", "summary": "SI 500000, room cap 5000/day, co-pay 5%"}
+{"ts": "2026-11-10T18:07:45.987Z", "claim_id": "CLM-0002", "agent": "fraud_agent", "tool": "lookup_prior_claims", "summary": "0 earlier claims by PH-1002"}
+{"ts": "2026-11-10T18:07:45.988Z", "claim_id": "CLM-0002", "agent": "fraud_agent", "tool": "check_waiting_period", "summary": "no waiting period applies"}
+{"ts": "2026-11-10T18:07:45.990Z", "claim_id": "CLM-0002", "agent": "fraud_agent", "tool": "score_risk", "summary": "score 0 []"}
+{"ts": "2026-11-10T18:07:45.988Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:07:45.998Z", "claim_id": "CLM-0002", "agent": "fraud_agent", "tool": "write_state", "section": "fraud", "summary": "wrote fraud"}
+{"ts": "2026-11-10T18:07:46.012Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'room rent boarding nursing expenses per day limit' -> ['ASJ-01:4.1.i', 'ASJ-01:3.45', 'ASJ-01:4.1.1.note2']"}
+{"ts": "2026-11-10T18:07:46.012Z", "claim_id": "CLM-0002", "agent": "cost_agent", "tool": "start", "summary": "6 bill lines against ASJ-01 limits"}
+{"ts": "2026-11-10T18:07:46.012Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'intensive care unit ICU expenses per day limit' -> ['ASJ-01:4.1.ii', 'ASJ-01:3.26', 'ASJ-01:3.25']"}
+{"ts": "2026-11-10T18:07:46.013Z", "claim_id": "CLM-0002", "agent": "cost_agent", "tool": "classify_items", "summary": "not payable: ['Gloves']"}
+{"ts": "2026-11-10T18:07:46.014Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'rates exceeding limits proportion other expenses' -> ['ASJ-01:4.1.1.note2', 'ASJ-01:5']"}
+{"ts": "2026-11-10T18:07:46.014Z", "claim_id": "CLM-0002", "agent": "cost_agent", "tool": "room_rent_deduction", "summary": "cuts: ['Room + nursing (4 days)', 'Consultant visits', 'Investigations (serum lipase, CT abdomen)']"}
+{"ts": "2026-11-10T18:07:46.015Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'co-payment admissible claim' -> ['ASJ-01:9.3', 'ASJ-01:3.11', 'ASJ-01:3.36.ii']"}
+{"ts": "2026-11-10T18:07:46.016Z", "claim_id": "CLM-0002", "agent": "cost_agent", "tool": "compute_payable", "summary": "payable 48925 of 72000; over-claim True"}
+{"ts": "2026-11-10T18:07:46.017Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'first thirty days waiting period illness' -> ['ASJ-01:6.2.i', 'ASJ-01:3.19', 'ASJ-01:6.3']"}
+{"ts": "2026-11-10T18:07:46.019Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'pre-existing disease waiting period' -> ['ASJ-01:6.1', 'ASJ-01:3.42', 'ASJ-01:3.44']"}
+{"ts": "2026-11-10T18:07:46.020Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items for which coverage is not available' -> ['IRDAI:List-I']"}
+{"ts": "2026-11-10T18:07:46.020Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into room charges' -> ['IRDAI:List-II']"}
+{"ts": "2026-11-10T18:07:46.018Z", "claim_id": "CLM-0002", "agent": "cost_agent", "tool": "write_state", "section": "cost", "summary": "wrote cost"}
+{"ts": "2026-11-10T18:07:46.022Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'subsumed into procedure charges' -> ['IRDAI:List-III']"}
+{"ts": "2026-11-10T18:07:46.023Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into costs of treatment' -> ['IRDAI:List-IV']"}
+{"ts": "2026-11-10T18:07:46.023Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "done", "summary": "23 clauses above the similarity threshold"}
+{"ts": "2026-11-10T18:07:46.031Z", "claim_id": "CLM-0002", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:07:46.034Z", "claim_id": "CLM-0002", "agent": "workflow", "tool": "fan-in", "summary": "policy, fraud and cost signals in; Manager decides"}
+{"ts": "2026-11-10T18:07:46.044Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "start", "summary": "fan-in: policy, fraud and cost signals"}
+{"ts": "2026-11-10T18:07:46.045Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "apply_decision_rules", "summary": "partial payout 48925"}
+{"ts": "2026-11-10T18:07:46.045Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "verify_citations", "summary": "cited ['ASJ-01:4.1.i', 'ASJ-01:4.1.1.note2', 'IRDAI:List-I', 'ASJ-01:9.3'] — all retrieved"}
+{"ts": "2026-11-10T18:07:46.046Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "write_state", "section": "decision", "summary": "wrote decision"}
+{"ts": "2026-11-10T18:07:46.054Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "set_status", "summary": "status assessing -> decided"}
+{"ts": "2026-11-10T18:07:46.067Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "set_status", "summary": "status decided -> closed"}
+{"ts": "2026-11-10T18:07:46.070Z", "claim_id": "CLM-0002", "agent": "manager_agent", "tool": "write_decision", "summary": "status closed"}
+{"ts": "2026-11-10T18:07:46.071Z", "claim_id": "CLM-0002", "agent": "workflow", "tool": "done", "summary": "status closed"}
+{"ts": "2026-11-10T18:07:56.853Z", "claim_id": "CLM-0003", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:07:56.859Z", "claim_id": "CLM-0003", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:07:56.860Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:07:56.862Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "extract_claim_fields", "summary": "policy ASJ-01, claimed 77000, diagnosis: planned laparoscopic repair of a right inguinal hernia with mesh"}
+{"ts": "2026-11-10T18:07:57.739Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "reconcile_fields", "summary": "groq (qwen/qwen3.8-27b): 10 fields agree · groq: 882/900 requests, 83,859/90,000 tokens left today", "llm": {"provider": "groq", "model": "qwen/qwen3.8-27b", "tokens": 445, "budget_left": {"requests_per_day": 882, "tokens_per_day": 83859, "requests_per_minute": 22, "tokens_per_minute": 5661}, "agreed": ["policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis", "room_type", "claimed", "bill_number", "accident"], "filled": [], "mismatches": {}, "errors": []}}
+{"ts": "2026-11-10T18:07:57.741Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "validate_policy", "summary": "ASJ-01 found in policies.json"}
+{"ts": "2026-11-10T18:07:57.743Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "parse_bill", "summary": "8 line items, total 77000"}
+{"ts": "2026-11-10T18:07:57.764Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "write_state", "section": "intake", "summary": "wrote intake"}
+{"ts": "2026-11-10T18:07:57.772Z", "claim_id": "CLM-0003", "agent": "intake_agent", "tool": "write_state", "section": "bill_items", "summary": "wrote bill_items"}
+{"ts": "2026-11-10T18:07:57.784Z", "claim_id": "CLM-0003", "agent": "workflow", "tool": "set_status", "summary": "status intake -> assessing"}
+{"ts": "2026-11-10T18:07:57.786Z", "claim_id": "CLM-0003", "agent": "workflow", "tool": "fan-out", "summary": "Policy Retrieval and Fraud Signal start together"}
+{"ts": "2026-11-10T18:07:57.798Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "start", "summary": "limits + clauses for ASJ-01"}
+{"ts": "2026-11-10T18:07:57.798Z", "claim_id": "CLM-0003", "agent": "fraud_agent", "tool": "start", "summary": "risk rules + prior-claim memory"}
+{"ts": "2026-11-10T18:07:57.799Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "get_policy_limits", "summary": "SI 500000, room cap 5000/day, co-pay 5%"}
+{"ts": "2026-11-10T18:07:57.799Z", "claim_id": "CLM-0003", "agent": "fraud_agent", "tool": "lookup_prior_claims", "summary": "0 earlier claims by PH-1003"}
+{"ts": "2026-11-10T18:07:57.801Z", "claim_id": "CLM-0003", "agent": "fraud_agent", "tool": "check_waiting_period", "summary": "excluded under ASJ-01:6.3.i until 2028-01-01"}
+{"ts": "2026-11-10T18:07:57.801Z", "claim_id": "CLM-0003", "agent": "fraud_agent", "tool": "score_risk", "summary": "score 0 []"}
+{"ts": "2026-11-10T18:07:57.800Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:07:57.814Z", "claim_id": "CLM-0003", "agent": "fraud_agent", "tool": "write_state", "section": "fraud", "summary": "wrote fraud"}
+{"ts": "2026-11-10T18:07:57.828Z", "claim_id": "CLM-0003", "agent": "cost_agent", "tool": "start", "summary": "8 bill lines against ASJ-01 limits"}
+{"ts": "2026-11-10T18:07:57.829Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'room rent boarding nursing expenses per day limit' -> ['ASJ-01:4.1.i', 'ASJ-01:3.45', 'ASJ-01:4.1.1.note2']"}
+{"ts": "2026-11-10T18:07:57.830Z", "claim_id": "CLM-0003", "agent": "cost_agent", "tool": "classify_items", "summary": "not payable: none"}
+{"ts": "2026-11-10T18:07:57.831Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'intensive care unit ICU expenses per day limit' -> ['ASJ-01:4.1.ii', 'ASJ-01:3.26', 'ASJ-01:3.25']"}
+{"ts": "2026-11-10T18:07:57.831Z", "claim_id": "CLM-0003", "agent": "cost_agent", "tool": "room_rent_deduction", "summary": "cuts: none"}
+{"ts": "2026-11-10T18:07:57.832Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'rates exceeding limits proportion other expenses' -> ['ASJ-01:4.1.1.note2', 'ASJ-01:5']"}
+{"ts": "2026-11-10T18:07:57.833Z", "claim_id": "CLM-0003", "agent": "cost_agent", "tool": "compute_payable", "summary": "payable 73150 of 77000; over-claim False"}
+{"ts": "2026-11-10T18:07:57.833Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'co-payment admissible claim' -> ['ASJ-01:9.3', 'ASJ-01:3.11', 'ASJ-01:3.36.ii']"}
+{"ts": "2026-11-10T18:07:57.835Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'first thirty days waiting period illness' -> ['ASJ-01:6.2.i', 'ASJ-01:3.19', 'ASJ-01:6.3']"}
+{"ts": "2026-11-10T18:07:57.838Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'pre-existing disease waiting period' -> ['ASJ-01:6.1', 'ASJ-01:3.42', 'ASJ-01:3.44']"}
+{"ts": "2026-11-10T18:07:57.834Z", "claim_id": "CLM-0003", "agent": "cost_agent", "tool": "write_state", "section": "cost", "summary": "wrote cost"}
+{"ts": "2026-11-10T18:07:57.838Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'waiting period hernia' -> ['ASJ-01:10.17.iii', 'ASJ-01:6.3.i', 'ASJ-01:6']"}
+{"ts": "2026-11-10T18:07:57.840Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items for which coverage is not available' -> ['IRDAI:List-I']"}
+{"ts": "2026-11-10T18:07:57.842Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into room charges' -> ['IRDAI:List-II']"}
+{"ts": "2026-11-10T18:07:57.842Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'subsumed into procedure charges' -> ['IRDAI:List-III']"}
+{"ts": "2026-11-10T18:07:57.844Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into costs of treatment' -> ['IRDAI:List-IV']"}
+{"ts": "2026-11-10T18:07:57.844Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "done", "summary": "28 clauses above the similarity threshold"}
+{"ts": "2026-11-10T18:07:57.854Z", "claim_id": "CLM-0003", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:07:57.861Z", "claim_id": "CLM-0003", "agent": "workflow", "tool": "fan-in", "summary": "policy, fraud and cost signals in; Manager decides"}
+{"ts": "2026-11-10T18:07:57.870Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "start", "summary": "fan-in: policy, fraud and cost signals"}
+{"ts": "2026-11-10T18:07:57.870Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "apply_decision_rules", "summary": "reject payout 0"}
+{"ts": "2026-11-10T18:07:57.871Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "verify_citations", "summary": "cited ['ASJ-01:6.3.i'] — all retrieved"}
+{"ts": "2026-11-10T18:07:57.873Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "write_state", "section": "decision", "summary": "wrote decision"}
+{"ts": "2026-11-10T18:07:57.886Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "set_status", "summary": "status assessing -> decided"}
+{"ts": "2026-11-10T18:07:57.901Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "set_status", "summary": "status decided -> closed"}
+{"ts": "2026-11-10T18:07:57.904Z", "claim_id": "CLM-0003", "agent": "manager_agent", "tool": "write_decision", "summary": "status closed"}
+{"ts": "2026-11-10T18:07:57.904Z", "claim_id": "CLM-0003", "agent": "workflow", "tool": "done", "summary": "status closed"}
+{"ts": "2026-11-10T18:08:06.669Z", "claim_id": "CLM-0004", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:08:06.674Z", "claim_id": "CLM-0004", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:08:06.674Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:08:06.674Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "extract_claim_fields", "summary": "policy ASJ-01, claimed 450000, diagnosis: acute coronary syndrome (triple-vessel disease); coronary angioplasty (PTCA) with two drug-eluting stents"}
+{"ts": "2026-11-10T18:08:07.609Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "reconcile_fields", "summary": "groq (qwen/qwen3.8-27b): 10 fields agree · groq: 881/900 requests, 83,345/90,000 tokens left today", "llm": {"provider": "groq", "model": "qwen/qwen3.8-27b", "tokens": 514, "budget_left": {"requests_per_day": 881, "tokens_per_day": 83345, "requests_per_minute": 21, "tokens_per_minute": 5147}, "agreed": ["policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis", "room_type", "claimed", "bill_number", "accident"], "filled": [], "mismatches": {}, "errors": []}}
+{"ts": "2026-11-10T18:08:07.610Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "validate_policy", "summary": "ASJ-01 found in policies.json"}
+{"ts": "2026-11-10T18:08:07.611Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "parse_bill", "summary": "10 line items, total 450000"}
+{"ts": "2026-11-10T18:08:07.622Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "write_state", "section": "intake", "summary": "wrote intake"}
+{"ts": "2026-11-10T18:08:07.632Z", "claim_id": "CLM-0004", "agent": "intake_agent", "tool": "write_state", "section": "bill_items", "summary": "wrote bill_items"}
+{"ts": "2026-11-10T18:08:07.646Z", "claim_id": "CLM-0004", "agent": "workflow", "tool": "set_status", "summary": "status intake -> assessing"}
+{"ts": "2026-11-10T18:08:07.648Z", "claim_id": "CLM-0004", "agent": "workflow", "tool": "fan-out", "summary": "Policy Retrieval and Fraud Signal start together"}
+{"ts": "2026-11-10T18:08:07.658Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "start", "summary": "limits + clauses for ASJ-01"}
+{"ts": "2026-11-10T18:08:07.658Z", "claim_id": "CLM-0004", "agent": "fraud_agent", "tool": "start", "summary": "risk rules + prior-claim memory"}
+{"ts": "2026-11-10T18:08:07.660Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "get_policy_limits", "summary": "SI 500000, room cap 5000/day, co-pay 5%"}
+{"ts": "2026-11-10T18:08:07.660Z", "claim_id": "CLM-0004", "agent": "fraud_agent", "tool": "lookup_prior_claims", "summary": "0 earlier claims by PH-1004"}
+{"ts": "2026-11-10T18:08:07.661Z", "claim_id": "CLM-0004", "agent": "fraud_agent", "tool": "check_waiting_period", "summary": "no waiting period applies"}
+{"ts": "2026-11-10T18:08:07.661Z", "claim_id": "CLM-0004", "agent": "fraud_agent", "tool": "score_risk", "summary": "score 25 ['amount_near_sum_insured']"}
+{"ts": "2026-11-10T18:08:07.661Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:08:07.674Z", "claim_id": "CLM-0004", "agent": "fraud_agent", "tool": "write_state", "section": "fraud", "summary": "wrote fraud"}
+{"ts": "2026-11-10T18:08:07.690Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'room rent boarding nursing expenses per day limit' -> ['ASJ-01:4.1.i', 'ASJ-01:3.45', 'ASJ-01:4.1.1.note2']"}
+{"ts": "2026-11-10T18:08:07.690Z", "claim_id": "CLM-0004", "agent": "cost_agent", "tool": "start", "summary": "10 bill lines against ASJ-01 limits"}
+{"ts": "2026-11-10T18:08:07.690Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'intensive care unit ICU expenses per day limit' -> ['ASJ-01:4.1.ii', 'ASJ-01:3.26', 'ASJ-01:3.25']"}
+{"ts": "2026-11-10T18:08:07.691Z", "claim_id": "CLM-0004", "agent": "cost_agent", "tool": "classify_items", "summary": "not payable: ['Gloves', 'Mask']"}
+{"ts": "2026-11-10T18:08:07.691Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'rates exceeding limits proportion other expenses' -> ['ASJ-01:4.1.1.note2', 'ASJ-01:5']"}
+{"ts": "2026-11-10T18:08:07.693Z", "claim_id": "CLM-0004", "agent": "cost_agent", "tool": "room_rent_deduction", "summary": "cuts: none"}
+{"ts": "2026-11-10T18:08:07.693Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'co-payment admissible claim' -> ['ASJ-01:9.3', 'ASJ-01:3.11', 'ASJ-01:3.36.ii']"}
+{"ts": "2026-11-10T18:08:07.694Z", "claim_id": "CLM-0004", "agent": "cost_agent", "tool": "compute_payable", "summary": "payable 426550 of 450000; over-claim False"}
+{"ts": "2026-11-10T18:08:07.694Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'first thirty days waiting period illness' -> ['ASJ-01:6.2.i', 'ASJ-01:3.19', 'ASJ-01:6.3']"}
+{"ts": "2026-11-10T18:08:07.697Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'pre-existing disease waiting period' -> ['ASJ-01:6.1', 'ASJ-01:3.42', 'ASJ-01:3.44']"}
+{"ts": "2026-11-10T18:08:07.697Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items for which coverage is not available' -> ['IRDAI:List-I']"}
+{"ts": "2026-11-10T18:08:07.695Z", "claim_id": "CLM-0004", "agent": "cost_agent", "tool": "write_state", "section": "cost", "summary": "wrote cost"}
+{"ts": "2026-11-10T18:08:07.698Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into room charges' -> ['IRDAI:List-II']"}
+{"ts": "2026-11-10T18:08:07.699Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'subsumed into procedure charges' -> ['IRDAI:List-III']"}
+{"ts": "2026-11-10T18:08:07.700Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into costs of treatment' -> ['IRDAI:List-IV']"}
+{"ts": "2026-11-10T18:08:07.700Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "done", "summary": "23 clauses above the similarity threshold"}
+{"ts": "2026-11-10T18:08:07.708Z", "claim_id": "CLM-0004", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:08:07.712Z", "claim_id": "CLM-0004", "agent": "workflow", "tool": "fan-in", "summary": "policy, fraud and cost signals in; Manager decides"}
+{"ts": "2026-11-10T18:08:07.721Z", "claim_id": "CLM-0004", "agent": "manager_agent", "tool": "start", "summary": "fan-in: policy, fraud and cost signals"}
+{"ts": "2026-11-10T18:08:07.722Z", "claim_id": "CLM-0004", "agent": "manager_agent", "tool": "apply_decision_rules", "summary": "escalate payout 426550 ['high_value']"}
+{"ts": "2026-11-10T18:08:07.722Z", "claim_id": "CLM-0004", "agent": "manager_agent", "tool": "verify_citations", "summary": "cited ['IRDAI:List-I', 'ASJ-01:9.3'] — all retrieved"}
+{"ts": "2026-11-10T18:08:07.723Z", "claim_id": "CLM-0004", "agent": "manager_agent", "tool": "write_state", "section": "decision", "summary": "wrote decision"}
+{"ts": "2026-11-10T18:08:07.734Z", "claim_id": "CLM-0004", "agent": "manager_agent", "tool": "set_status", "summary": "status assessing -> escalated"}
+{"ts": "2026-11-10T18:08:07.736Z", "claim_id": "CLM-0004", "agent": "manager_agent", "tool": "write_decision", "summary": "status escalated"}
+{"ts": "2026-11-10T18:08:07.747Z", "claim_id": "CLM-0004", "agent": "human_desk", "tool": "write_state", "section": "human", "summary": "wrote human"}
+{"ts": "2026-11-10T18:08:07.751Z", "claim_id": "CLM-0004", "agent": "human_desk", "tool": "create_review_ticket", "summary": "ticket RV-0001 opened"}
+{"ts": "2026-11-10T18:08:07.751Z", "claim_id": "CLM-0004", "agent": "human_desk", "tool": "create_review_ticket", "summary": "RV-0001 waiting for a reviewer"}
+{"ts": "2026-11-10T18:08:07.761Z", "claim_id": "CLM-0004", "agent": "workflow", "tool": "done", "summary": "status escalated — waiting for a reviewer"}
+{"ts": "2026-11-10T18:08:16.800Z", "claim_id": "CLM-0004", "agent": "human_desk", "tool": "write_state", "section": "human", "summary": "wrote human"}
+{"ts": "2026-11-10T18:08:16.828Z", "claim_id": "CLM-0004", "agent": "human_desk", "tool": "set_status", "summary": "status escalated -> closed"}
+{"ts": "2026-11-10T18:08:16.831Z", "claim_id": "CLM-0004", "agent": "human_desk", "tool": "record_human_verdict", "summary": "approve by Demo Reviewer, payout 426550"}
+{"ts": "2026-11-10T18:08:24.854Z", "claim_id": "CLM-0005", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:08:24.859Z", "claim_id": "CLM-0005", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:08:24.860Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:08:24.861Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "extract_claim_fields", "summary": "policy ASJ-01, claimed 99300, diagnosis: fracture of the right distal radius; open reduction and internal fixation with a plate"}
+{"ts": "2026-11-10T18:08:25.724Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "reconcile_fields", "summary": "groq (qwen/qwen3.8-27b): 10 fields agree · groq: 880/900 requests, 82,890/90,000 tokens left today", "llm": {"provider": "groq", "model": "qwen/qwen3.8-27b", "tokens": 455, "budget_left": {"requests_per_day": 880, "tokens_per_day": 82890, "requests_per_minute": 21, "tokens_per_minute": 5147}, "agreed": ["policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis", "room_type", "claimed", "bill_number", "accident"], "filled": [], "mismatches": {}, "errors": []}}
+{"ts": "2026-11-10T18:08:25.725Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "validate_policy", "summary": "ASJ-01 found in policies.json"}
+{"ts": "2026-11-10T18:08:25.726Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "parse_bill", "summary": "9 line items, total 99300"}
+{"ts": "2026-11-10T18:08:25.736Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "write_state", "section": "intake", "summary": "wrote intake"}
+{"ts": "2026-11-10T18:08:25.746Z", "claim_id": "CLM-0005", "agent": "intake_agent", "tool": "write_state", "section": "bill_items", "summary": "wrote bill_items"}
+{"ts": "2026-11-10T18:08:25.757Z", "claim_id": "CLM-0005", "agent": "workflow", "tool": "set_status", "summary": "status intake -> assessing"}
+{"ts": "2026-11-10T18:08:25.758Z", "claim_id": "CLM-0005", "agent": "workflow", "tool": "fan-out", "summary": "Policy Retrieval and Fraud Signal start together"}
+{"ts": "2026-11-10T18:08:25.770Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "start", "summary": "limits + clauses for ASJ-01"}
+{"ts": "2026-11-10T18:08:25.770Z", "claim_id": "CLM-0005", "agent": "fraud_agent", "tool": "start", "summary": "risk rules + prior-claim memory"}
+{"ts": "2026-11-10T18:08:25.771Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "get_policy_limits", "summary": "SI 500000, room cap 5000/day, co-pay 5%"}
+{"ts": "2026-11-10T18:08:25.771Z", "claim_id": "CLM-0005", "agent": "fraud_agent", "tool": "lookup_prior_claims", "summary": "0 earlier claims by PH-1005"}
+{"ts": "2026-11-10T18:08:25.772Z", "claim_id": "CLM-0005", "agent": "fraud_agent", "tool": "check_waiting_period", "summary": "accident: waiting periods do not apply"}
+{"ts": "2026-11-10T18:08:25.773Z", "claim_id": "CLM-0005", "agent": "fraud_agent", "tool": "score_risk", "summary": "score 75 ['soon_after_inception', 'duplicate_bill_number']"}
+{"ts": "2026-11-10T18:08:25.772Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:08:25.784Z", "claim_id": "CLM-0005", "agent": "fraud_agent", "tool": "write_state", "section": "fraud", "summary": "wrote fraud"}
+{"ts": "2026-11-10T18:08:25.799Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'room rent boarding nursing expenses per day limit' -> ['ASJ-01:4.1.i', 'ASJ-01:3.45', 'ASJ-01:4.1.1.note2']"}
+{"ts": "2026-11-10T18:08:25.799Z", "claim_id": "CLM-0005", "agent": "cost_agent", "tool": "start", "summary": "9 bill lines against ASJ-01 limits"}
+{"ts": "2026-11-10T18:08:25.800Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'intensive care unit ICU expenses per day limit' -> ['ASJ-01:4.1.ii', 'ASJ-01:3.26', 'ASJ-01:3.25']"}
+{"ts": "2026-11-10T18:08:25.801Z", "claim_id": "CLM-0005", "agent": "cost_agent", "tool": "classify_items", "summary": "not payable: ['Gloves']"}
+{"ts": "2026-11-10T18:08:25.802Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'rates exceeding limits proportion other expenses' -> ['ASJ-01:4.1.1.note2', 'ASJ-01:5']"}
+{"ts": "2026-11-10T18:08:25.802Z", "claim_id": "CLM-0005", "agent": "cost_agent", "tool": "room_rent_deduction", "summary": "cuts: none"}
+{"ts": "2026-11-10T18:08:25.803Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'co-payment admissible claim' -> ['ASJ-01:9.3', 'ASJ-01:3.11', 'ASJ-01:3.36.ii']"}
+{"ts": "2026-11-10T18:08:25.805Z", "claim_id": "CLM-0005", "agent": "cost_agent", "tool": "compute_payable", "summary": "payable 94050 of 99300; over-claim False"}
+{"ts": "2026-11-10T18:08:25.806Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'first thirty days waiting period illness' -> ['ASJ-01:6.2.i', 'ASJ-01:3.19', 'ASJ-01:6.3']"}
+{"ts": "2026-11-10T18:08:25.807Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'pre-existing disease waiting period' -> ['ASJ-01:6.1', 'ASJ-01:3.42', 'ASJ-01:3.44']"}
+{"ts": "2026-11-10T18:08:25.808Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items for which coverage is not available' -> ['IRDAI:List-I']"}
+{"ts": "2026-11-10T18:08:25.809Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into room charges' -> ['IRDAI:List-II']"}
+{"ts": "2026-11-10T18:08:25.807Z", "claim_id": "CLM-0005", "agent": "cost_agent", "tool": "write_state", "section": "cost", "summary": "wrote cost"}
+{"ts": "2026-11-10T18:08:25.809Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'subsumed into procedure charges' -> ['IRDAI:List-III']"}
+{"ts": "2026-11-10T18:08:25.811Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into costs of treatment' -> ['IRDAI:List-IV']"}
+{"ts": "2026-11-10T18:08:25.811Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "done", "summary": "23 clauses above the similarity threshold"}
+{"ts": "2026-11-10T18:08:25.821Z", "claim_id": "CLM-0005", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:08:25.824Z", "claim_id": "CLM-0005", "agent": "workflow", "tool": "fan-in", "summary": "policy, fraud and cost signals in; Manager decides"}
+{"ts": "2026-11-10T18:08:25.835Z", "claim_id": "CLM-0005", "agent": "manager_agent", "tool": "start", "summary": "fan-in: policy, fraud and cost signals"}
+{"ts": "2026-11-10T18:08:25.835Z", "claim_id": "CLM-0005", "agent": "manager_agent", "tool": "apply_decision_rules", "summary": "escalate payout 94050 ['fraud_risk']"}
+{"ts": "2026-11-10T18:08:25.836Z", "claim_id": "CLM-0005", "agent": "manager_agent", "tool": "verify_citations", "summary": "cited ['IRDAI:List-I', 'ASJ-01:9.3'] — all retrieved"}
+{"ts": "2026-11-10T18:08:25.836Z", "claim_id": "CLM-0005", "agent": "manager_agent", "tool": "write_state", "section": "decision", "summary": "wrote decision"}
+{"ts": "2026-11-10T18:08:25.848Z", "claim_id": "CLM-0005", "agent": "manager_agent", "tool": "set_status", "summary": "status assessing -> escalated"}
+{"ts": "2026-11-10T18:08:25.851Z", "claim_id": "CLM-0005", "agent": "manager_agent", "tool": "write_decision", "summary": "status escalated"}
+{"ts": "2026-11-10T18:08:25.873Z", "claim_id": "CLM-0005", "agent": "human_desk", "tool": "write_state", "section": "human", "summary": "wrote human"}
+{"ts": "2026-11-10T18:08:25.875Z", "claim_id": "CLM-0005", "agent": "human_desk", "tool": "create_review_ticket", "summary": "ticket RV-0002 opened"}
+{"ts": "2026-11-10T18:08:25.876Z", "claim_id": "CLM-0005", "agent": "human_desk", "tool": "create_review_ticket", "summary": "RV-0002 waiting for a reviewer"}
+{"ts": "2026-11-10T18:08:25.886Z", "claim_id": "CLM-0005", "agent": "workflow", "tool": "done", "summary": "status escalated — waiting for a reviewer"}
+{"ts": "2026-11-10T18:08:34.783Z", "claim_id": "CLM-0006", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:08:34.789Z", "claim_id": "CLM-0006", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:08:34.790Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:08:34.791Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "extract_claim_fields", "summary": "policy GHC-01, claimed 42000, diagnosis: dengue fever"}
+{"ts": "2026-11-10T18:08:35.685Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "reconcile_fields", "summary": "groq (qwen/qwen3.8-27b): 10 fields agree · groq: 879/900 requests, 82,467/90,000 tokens left today", "llm": {"provider": "groq", "model": "qwen/qwen3.8-27b", "tokens": 423, "budget_left": {"requests_per_day": 879, "tokens_per_day": 82467, "requests_per_minute": 20, "tokens_per_minute": 4724}, "agreed": ["policy_id", "policyholder_id", "patient", "admit", "discharge", "diagnosis", "room_type", "claimed", "bill_number", "accident"], "filled": [], "mismatches": {}, "errors": []}}
+{"ts": "2026-11-10T18:08:35.686Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "validate_policy", "summary": "GHC-01 found in policies.json"}
+{"ts": "2026-11-10T18:08:35.686Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "parse_bill", "summary": "5 line items, total 42000"}
+{"ts": "2026-11-10T18:08:35.695Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "write_state", "section": "intake", "summary": "wrote intake"}
+{"ts": "2026-11-10T18:08:35.707Z", "claim_id": "CLM-0006", "agent": "intake_agent", "tool": "write_state", "section": "bill_items", "summary": "wrote bill_items"}
+{"ts": "2026-11-10T18:08:35.718Z", "claim_id": "CLM-0006", "agent": "workflow", "tool": "set_status", "summary": "status intake -> assessing"}
+{"ts": "2026-11-10T18:08:35.719Z", "claim_id": "CLM-0006", "agent": "workflow", "tool": "fan-out", "summary": "Policy Retrieval and Fraud Signal start together"}
+{"ts": "2026-11-10T18:08:35.732Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "start", "summary": "limits + clauses for GHC-01"}
+{"ts": "2026-11-10T18:08:35.732Z", "claim_id": "CLM-0006", "agent": "fraud_agent", "tool": "start", "summary": "risk rules + prior-claim memory"}
+{"ts": "2026-11-10T18:08:35.732Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "get_policy_limits", "summary": "SI 300000, room cap 3000/day, co-pay 0%"}
+{"ts": "2026-11-10T18:08:35.732Z", "claim_id": "CLM-0006", "agent": "fraud_agent", "tool": "lookup_prior_claims", "summary": "0 earlier claims by PH-1006"}
+{"ts": "2026-11-10T18:08:35.733Z", "claim_id": "CLM-0006", "agent": "fraud_agent", "tool": "check_waiting_period", "summary": "no waiting period applies"}
+{"ts": "2026-11-10T18:08:35.734Z", "claim_id": "CLM-0006", "agent": "fraud_agent", "tool": "score_risk", "summary": "score 0 []"}
+{"ts": "2026-11-10T18:08:35.733Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:08:35.745Z", "claim_id": "CLM-0006", "agent": "fraud_agent", "tool": "write_state", "section": "fraud", "summary": "wrote fraud"}
+{"ts": "2026-11-10T18:08:35.756Z", "claim_id": "CLM-0006", "agent": "cost_agent", "tool": "start", "summary": "5 bill lines against GHC-01 limits"}
+{"ts": "2026-11-10T18:08:35.757Z", "claim_id": "CLM-0006", "agent": "cost_agent", "tool": "classify_items", "summary": "not payable: none"}
+{"ts": "2026-11-10T18:08:35.759Z", "claim_id": "CLM-0006", "agent": "cost_agent", "tool": "room_rent_deduction", "summary": "cuts: none"}
+{"ts": "2026-11-10T18:08:35.760Z", "claim_id": "CLM-0006", "agent": "cost_agent", "tool": "compute_payable", "summary": "payable 42000 of 42000; over-claim False"}
+{"ts": "2026-11-10T18:08:35.760Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'room rent boarding nursing expenses per day limit' -> []"}
+{"ts": "2026-11-10T18:08:35.761Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'intensive care unit ICU expenses per day limit' -> []"}
+{"ts": "2026-11-10T18:08:35.761Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'rates exceeding limits proportion other expenses' -> []"}
+{"ts": "2026-11-10T18:08:35.762Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'co-payment admissible claim' -> []"}
+{"ts": "2026-11-10T18:08:35.761Z", "claim_id": "CLM-0006", "agent": "cost_agent", "tool": "write_state", "section": "cost", "summary": "wrote cost"}
+{"ts": "2026-11-10T18:08:35.762Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'first thirty days waiting period illness' -> []"}
+{"ts": "2026-11-10T18:08:35.764Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_policy_clauses", "summary": "'pre-existing disease waiting period' -> []"}
+{"ts": "2026-11-10T18:08:35.765Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items for which coverage is not available' -> ['IRDAI:List-I']"}
+{"ts": "2026-11-10T18:08:35.765Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into room charges' -> ['IRDAI:List-II']"}
+{"ts": "2026-11-10T18:08:35.766Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'subsumed into procedure charges' -> ['IRDAI:List-III']"}
+{"ts": "2026-11-10T18:08:35.766Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "search_irdai_rules", "summary": "'items subsumed into costs of treatment' -> ['IRDAI:List-IV']"}
+{"ts": "2026-11-10T18:08:35.767Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "done", "summary": "4 clauses above the similarity threshold"}
+{"ts": "2026-11-10T18:08:35.776Z", "claim_id": "CLM-0006", "agent": "policy_agent", "tool": "write_state", "section": "policy", "summary": "wrote policy"}
+{"ts": "2026-11-10T18:08:35.780Z", "claim_id": "CLM-0006", "agent": "workflow", "tool": "fan-in", "summary": "policy, fraud and cost signals in; Manager decides"}
+{"ts": "2026-11-10T18:08:35.788Z", "claim_id": "CLM-0006", "agent": "manager_agent", "tool": "start", "summary": "fan-in: policy, fraud and cost signals"}
+{"ts": "2026-11-10T18:08:35.789Z", "claim_id": "CLM-0006", "agent": "manager_agent", "tool": "apply_decision_rules", "summary": "escalate payout 42000 ['no_grounding']"}
+{"ts": "2026-11-10T18:08:35.790Z", "claim_id": "CLM-0006", "agent": "manager_agent", "tool": "verify_citations", "summary": "cited [] — all retrieved"}
+{"ts": "2026-11-10T18:08:35.790Z", "claim_id": "CLM-0006", "agent": "manager_agent", "tool": "write_state", "section": "decision", "summary": "wrote decision"}
+{"ts": "2026-11-10T18:08:35.799Z", "claim_id": "CLM-0006", "agent": "manager_agent", "tool": "set_status", "summary": "status assessing -> escalated"}
+{"ts": "2026-11-10T18:08:35.801Z", "claim_id": "CLM-0006", "agent": "manager_agent", "tool": "write_decision", "summary": "status escalated"}
+{"ts": "2026-11-10T18:08:35.823Z", "claim_id": "CLM-0006", "agent": "human_desk", "tool": "write_state", "section": "human", "summary": "wrote human"}
+{"ts": "2026-11-10T18:08:35.826Z", "claim_id": "CLM-0006", "agent": "human_desk", "tool": "create_review_ticket", "summary": "ticket RV-0003 opened"}
+{"ts": "2026-11-10T18:08:35.826Z", "claim_id": "CLM-0006", "agent": "human_desk", "tool": "create_review_ticket", "summary": "RV-0003 waiting for a reviewer"}
+{"ts": "2026-11-10T18:08:35.834Z", "claim_id": "CLM-0006", "agent": "workflow", "tool": "done", "summary": "status escalated — waiting for a reviewer"}
+{"ts": "2026-11-10T18:08:40.748Z", "claim_id": "CLM-0007", "agent": "workflow", "tool": "reset_state", "summary": "record reset for a new run"}
+{"ts": "2026-11-10T18:08:40.754Z", "claim_id": "CLM-0007", "agent": "workflow", "tool": "start", "summary": "intake"}
+{"ts": "2026-11-10T18:08:40.755Z", "claim_id": "CLM-0007", "agent": "intake_agent", "tool": "start", "summary": "reading claim message and bill"}
+{"ts": "2026-11-10T18:08:40.755Z", "claim_id": "CLM-0007", "agent": "intake_agent", "tool": "halt", "summary": "claimed amount is missing — ask the claimant for the amount claimed and the final bill"}
+{"ts": "2026-11-10T18:08:40.769Z", "claim_id": "CLM-0007", "agent": "intake_agent", "tool": "set_halt", "summary": "halted: claimed amount is missing — ask the claimant for the amount claimed and the final bill"}
+{"ts": "2026-11-10T18:08:40.772Z", "claim_id": "CLM-0007", "agent": "workflow", "tool": "stop", "summary": "intake halted: missing_claimed_amount"}

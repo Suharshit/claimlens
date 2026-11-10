@@ -3,15 +3,20 @@
 This is the single source of truth for where the project stands. Read it at the start of every chat. Update it at the end of every working session: change task statuses, add a session-log entry (newest first), and record any decision or open question.
 
 ## Current status
-- **Phase:** Build complete on deterministic orchestration — all seven scenarios pass end to end; demo notebook, README and diagram done
+- **Phase:** All must-haves (M1–M15) done — LLM intake merged (#15); all seven scenarios pass end to end with and without the LLM; submission pieces and should-haves left
 - **Current week:** Week 3 / final week by calendar (10 Nov); deadline 15 Nov
 - **Last updated:** 2026-11-10
-- **Next action (Suharshit):** push `feat/m1-llm-intake`, open the PR, merge once `ci` is green (keys in, live tests pass, 7/7 with the LLM on) → M1 Done. Then slides + viva prep; INT333 `make up ENV=dev` on AWS from WSL. Full list: `HANDOFF.md`.
+- **Next action (Suharshit):** push `docs/progress-m1-done` → PR → merge; then push `feat/s4-demo-website` → PR → merge. Try the site: `python api.py` → http://localhost:8000. Then slides + viva prep, INT333 `make up ENV=dev` (the site comes with it). Full list: `HANDOFF.md`.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-10 | **S4 demo UI = a web page served by the FastAPI app** (`web/index.html` at `GET /`, JSON routes `/api/claims`, `/api/claims/{id}`, `/api/claims/{id}/review`, `/api/clauses/{id}`) instead of the Streamlit `app.py` planned in 04 | Benefits both courses: the CSE476 demo and the app the INT333 pipeline already deploys to AWS (Streamlit can't run on the 1 GB servers); no new dependency; vanilla HTML/JS, no CDN, so it works offline at the viva. 04 left unchanged; this row supersedes its Streamlit line |
+| 2026-11-10 | The website's Evaluation tab is the S6 accuracy table: expected (hand-worked `expected.json`) vs actual per scenario, same verdict + payout check as `tests/test_scenarios.py` | No separate S6 artefact needed; 7/7 shown live |
+| 2026-11-10 | Fix: `create_review_ticket` writes an existing open ticket back into the record | A re-run of an escalated claim (`reset_state`) left it escalated with no ticket, so it could never be reviewed — found while testing the website's Run-again button; regression test in `test_scenarios.py` |
+| 2026-11-10 | README rewritten to fit 2 A4 pages with the diagram (it rendered to 4): diagram floated right at 215 px beside the architecture/money/fraud/memory text, roster drops the Writes column (sections match agent names), memory table folded into prose, LLM intake paragraph added, test count 291 + 4 live | Deliverable limit is 2 pages; `architecture.png` is also a separate deliverable at full size |
+| 2026-11-10 | The Indian health-claims variant is taken as a valid Q1 answer; no instructor confirmation needed | The professor is open to both generic and domain variants; the architecture maps 1:1 onto Q1 (five named agents, fan-out / fan-in, human routing). Corpus stays the IFFCO wording + IRDAI lists; partial approve stays as a fourth verdict |
 | 2026-11-10 | **Model lane: free open-weight models over OpenAI-compatible APIs** — Groq (`qwen/qwen3.8-27b`, reasoning hidden) first, NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`, thinking off) second, rule-based extractor last. Keys `GROQ_API_KEY` / `NVIDIA_API_KEY` in `.env`; providers, models and caps in `config.yaml` `llm:` | No cost, no card; Groq has the clearest free limits and is fast for a live demo; Nemotron gives an NVIDIA open model as backup. Ruled out: Ollama (7.3 GB laptop, servers can't host a model), Hugging Face (≈$0.10/month free credit), OpenRouter (50 free requests/day), Kaggle (GPU notebooks, not an API) |
 | 2026-11-10 | Models re-picked after the first live ping: Groq had dropped `llama-3.3-70b-versatile` (404) and NVIDIA retired `nemotron-3-nano-30b-a3b` on 2026-09-01 (410). Tried the claim-1 extraction on each candidate: `qwen/qwen3.8-27b` 10/10 fields agree, 0.6 s; `openai/gpt-oss-120b` 9/10; `nemotron-3.5-lightning-30b-a3b` 10/10; `nemotron-nano-3-30b-a3b` and `nemotron-3-super-120b-a12b` 404 for this account. Added `python -m tools.llm_client models` and a 404/410 hint | Free catalogs change without notice; the fix is a config edit, and the tool now says so |
 | 2026-11-10 | `tools/llm_client.py` calls `/chat/completions` with `httpx` (not an MAF chat client) | Reads the providers' `x-ratelimit-*` headers and token usage for the caps; one small dependency on the lean servers (`httpx` added to `requirements-server.txt`); the workflow itself stays on MAF |
@@ -86,7 +91,7 @@ This is the single source of truth for where the project stands. Read it at the 
 | 2026-10-19 | Escalation thresholds: > ₹2,00,000, risk ≥ 60, no grounding clause | Starting values; tune in config.yaml |
 
 ## Open questions
-- [ ] Confirm with the instructor that the Indian health-claims variant counts as Q1.
+- [x] Indian health-claims variant counts as Q1 (2026-11-10): the professor accepts either a generic or a domain variant, so no confirmation needed.
 - [x] Team size: solo (2026-11-04).
 - [ ] Solo scope: keep all seven agents, or drop the Grievance Drafter (S2 only)? The Human Review Desk stays, because M11 is a must-have.
 - [x] Framework: Microsoft Agent Framework, `agent-framework-core==1.24.0` (2026-11-05).
@@ -125,7 +130,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
 | — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged 2026-11-04; release **v0.1.0** published 2026-11-05 (tarball + sha256, release workflow green); next: WSL setup, `make up ENV=dev` on AWS |
-| M1 | Claim intake → structured record | A | In progress | Rule-based `extract_claim_fields` + Intake Agent done (2026-11-05); 2026-11-10 LLM path built on branch `feat/m1-llm-intake` (Groq qwen3.8-27b → NVIDIA Nemotron 3.5 Lightning → rules, capped, rules-win cross-check); live tests pass, 7/7 scenarios match with the LLM on — Done once the PR is merged |
+| M1 | Claim intake → structured record | A | Done | Rule-based `extract_claim_fields` (2026-11-05) + LLM path (Groq qwen3.8-27b → NVIDIA Nemotron 3.5 Lightning → rules, capped, rules-win cross-check), PR #15 merged 2026-11-10; live tests pass, 7/7 scenarios match with the LLM on |
 | M2 | Halt on missing policy id / amount | A | Done | 2026-11-05 `IntakeHalt(reason)` + `set_halt`; scenario 7 halts, nothing downstream runs |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Done | 2026-11-04 chunking (202 chunks); 2026-11-05 `search_policy_clauses`, `get_policy_limits`, `search_irdai_rules` (BM25, 0–1 IDF-coverage score, policy filter); `tests/test_search.py` |
 | M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
@@ -140,19 +145,20 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Done | 2026-11-05 `demo.ipynb` — 7/7 scenarios match |
 | M15 | Test file (≥ 3 scenarios; plan 7) | A | Done | 2026-11-05 `tests/test_scenarios.py`: all 7 scenarios end to end + parallelism, section ownership, re-run and append-only log tests |
-| S1 | Deduction table in output | A | In progress | Table produced by `compute_payable` (item, amount, reason, clause); showing it in the notebook/UI comes later |
+| S1 | Deduction table in output | A | Done | Table from `compute_payable` (item, amount, reason, clause), shown in `demo.ipynb` and on the website with clickable clause ids |
 | S2 | Grievance letter draft | — | Not started | |
 | S3 | Missing-document check | — | Not started | |
-| S4 | Streamlit UI | — | Not started | |
+| S4 | Demo UI (web page, not Streamlit — see decisions) | C | In progress | 2026-11-10 built on `feat/s4-demo-website`: claim list, run, decision card, clause pop-ups, deductions, fraud gauge, agent timeline lanes, live trace, Human Review Desk form, Evaluation and Architecture tabs; `tests/test_web.py` (14). Done once merged |
 | S5 | Retrieval hit@3 check | B | Not started | |
-| S6 | Accuracy table | A | Not started | |
+| S6 | Accuracy table | A | In progress | 2026-11-10 the website's Evaluation tab (expected vs actual, 7/7); Done with S4's merge |
 
 ## Submission checklist
 - [x] Built on Microsoft Agent Framework (`workflow.py`)
 - [x] ≥ 4 agents, one module each (7)
 - [x] Every agent calls ≥ 2 Python tools
 - [x] RAG grounding + shared state used by every agent
-- [x] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure) — check the page count when exported with the diagram
+- [x] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure) — checked 2026-11-10: exactly 2 A4 pages rendered with the diagram (floated beside the details)
+- [x] Sample run committed (`logs/run_log.jsonl`, `state/CLM-0001.json`, `state/CLM-0004.json`, force-added 2026-11-10)
 - [x] Runnable demo notebook with multi-agent trace (`demo.ipynb`)
 - [x] Architecture diagram (`architecture.png`)
 - [x] Append-only run log (M13)
@@ -163,6 +169,14 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-10** · Claude (Suharshit chose the web page: "benefit both courses") · Branch `feat/s4-demo-website`: FastAPI-served demo site (`web/index.html`, 4 JSON routes), `tests/test_web.py`; checked in a headless browser (runs, review flow, clause pop-up, 7/7 evaluation, no console errors). Found and fixed a real bug: re-running an escalated claim lost its review ticket. README run line mentions the site (still 2 pages). pytest 306 passed. · Next: merge both branches; slides; viva prep; AWS deploy.
+
+- **2026-11-10** · Suharshit + Claude · Demo re-run (trace shows `reconcile_fields` + budget left on claims 1–6; verdicts unchanged). README updated for the LLM path and cut from 4 rendered pages to 2. Sample run force-added. All on branch `docs/progress-m1-done` (5 commits). pytest 291 passed. · Next: push + merge; then the demo website (S4).
+
+- **2026-11-10** · Suharshit · Decided the Indian variant counts as Q1 (professor open to both); open question closed. · Next: unchanged.
+
+- **2026-11-10** · Suharshit · PR #15 (`feat/m1-llm-intake`) merged → M1 Done; every must-have complete. · Next: re-run demo + sample run, README page check, slides, viva prep, AWS deploy; then S5/S6.
 
 - **2026-11-10** · Suharshit + Claude · Keys in `.env`; first ping failed (Groq 404, NVIDIA 410 — both models gone). Listed each key's models, tried the claim-1 extraction on five candidates, switched to `qwen/qwen3.8-27b` (Groq) and `nemotron-3.5-lightning-30b-a3b` (NVIDIA); added `models` command + retired-model hint. `ping` OK on both; `pytest -m live` 4 passed; `pytest` 291 passed / 1 skipped; all 7 scenarios end to end with the real LLM on match expected, Groq agreeing on all 10 fields for 1–6 (7 halts before the LLM). · Next: push `feat/m1-llm-intake`, PR, merge → M1 Done.
 
