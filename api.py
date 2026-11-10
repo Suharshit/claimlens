@@ -7,6 +7,7 @@ variables and logs go to stdout, so the same build runs everywhere.
     GET  /healthz                 -> {"status": "ok"}
     GET  /version                 -> {"version": "v1.0.0", ...}
     POST /claims/{claim_id}/run   -> final claim-state record (501 until M7 is built)
+    GET  /llm/usage               -> LLM budget left per provider (no API call, no keys shown)
 
 Run locally: ``python api.py`` (PORT=8000, HOST=0.0.0.0 by default).
 """
@@ -44,6 +45,14 @@ def healthz() -> dict[str, str]:
 def version() -> dict[str, str]:
     """Deployed version (set by Ansible from the release tag)."""
     return {"app": "claimlens", "version": APP_VERSION, "disclaimer": DISCLAIMER}
+
+
+@app.get("/llm/usage")
+def llm_usage() -> dict[str, Any]:
+    """How much of each provider's daily/minute cap is left (from the usage ledger)."""
+    from tools.llm_client import LlmClient, llm_enabled
+
+    return {"llm_enabled": llm_enabled(), "providers": LlmClient().status(), "disclaimer": DISCLAIMER}
 
 
 @app.post("/claims/{claim_id}/run")

@@ -4,14 +4,20 @@ This is the single source of truth for where the project stands. Read it at the 
 
 ## Current status
 - **Phase:** Build complete on deterministic orchestration — all seven scenarios pass end to end; demo notebook, README and diagram done
-- **Current week:** Week 2 by calendar (5 Nov); deadline 15 Nov
-- **Last updated:** 2026-11-05
-- **Next action (Suharshit):** choose a model lane + API key and add the LLM intake path (optional — the rule-based path already passes all 7). INT333: v0.1.0 released — next `make up ENV=dev` on AWS from WSL. Full list: `HANDOFF.md`.
+- **Current week:** Week 3 / final week by calendar (10 Nov); deadline 15 Nov
+- **Last updated:** 2026-11-10
+- **Next action (Suharshit):** push `feat/m1-llm-intake`, open the PR, merge once `ci` is green (keys in, live tests pass, 7/7 with the LLM on) → M1 Done. Then slides + viva prep; INT333 `make up ENV=dev` on AWS from WSL. Full list: `HANDOFF.md`.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-10 | **Model lane: free open-weight models over OpenAI-compatible APIs** — Groq (`qwen/qwen3.8-27b`, reasoning hidden) first, NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`, thinking off) second, rule-based extractor last. Keys `GROQ_API_KEY` / `NVIDIA_API_KEY` in `.env`; providers, models and caps in `config.yaml` `llm:` | No cost, no card; Groq has the clearest free limits and is fast for a live demo; Nemotron gives an NVIDIA open model as backup. Ruled out: Ollama (7.3 GB laptop, servers can't host a model), Hugging Face (≈$0.10/month free credit), OpenRouter (50 free requests/day), Kaggle (GPU notebooks, not an API) |
+| 2026-11-10 | Models re-picked after the first live ping: Groq had dropped `llama-3.3-70b-versatile` (404) and NVIDIA retired `nemotron-3-nano-30b-a3b` on 2026-09-01 (410). Tried the claim-1 extraction on each candidate: `qwen/qwen3.8-27b` 10/10 fields agree, 0.6 s; `openai/gpt-oss-120b` 9/10; `nemotron-3.5-lightning-30b-a3b` 10/10; `nemotron-nano-3-30b-a3b` and `nemotron-3-super-120b-a12b` 404 for this account. Added `python -m tools.llm_client models` and a 404/410 hint | Free catalogs change without notice; the fix is a config edit, and the tool now says so |
+| 2026-11-10 | `tools/llm_client.py` calls `/chat/completions` with `httpx` (not an MAF chat client) | Reads the providers' `x-ratelimit-*` headers and token usage for the caps; one small dependency on the lean servers (`httpx` added to `requirements-server.txt`); the workflow itself stays on MAF |
+| 2026-11-10 | Self-imposed caps below each free tier, counted per provider per UTC day + rolling minute in `state/llm_usage.json` (config `paths.llm_usage`, deliberately not a runtime key so the count holds across notebook, tests and API). A call that would pass a cap is never sent; HTTP 429 blocks the provider for `retry-after`; failed attempts still count. Groq caps 25 RPM / 900 RPD / 7K TPM / 90K TPD (free, from its headers: 1,000 RPD / 8K TPM); NVIDIA 30 RPM / 200 RPD (credit-metered) | The free tiers can't be overrun by a demo loop; budget left is shown by `python -m tools.llm_client`, `GET /llm/usage`, and every intake log line |
+| 2026-11-10 | LLM = a second reading, rules win: rules extract first and decide any halt (M2); the LLM reads the same message; `reconcile_fields` keeps the rule value on every disagreement (logged as a mismatch), fills only fields the rules couldn't read, and never takes `policy_id` or `claimed`; filled fields must still validate as `ClaimIntake`. No key / cap reached / error → rules only, reason logged | Money and halts stay deterministic; scenario 3's waiting-period match depends on the rule diagnosis wording; a wrong LLM reading can't change any verdict (tested) |
+| 2026-11-10 | Tests: `tests/conftest.py` sets `CLAIMLENS_LLM=off` for every test not marked `live`; `tests/test_llm_client.py` (offline, `httpx.MockTransport`); `tests/test_llm_live.py` marked `live`, excluded by `pytest.ini` — run with `pytest -m live -s`, skips a provider with no key | CI and normal `pytest` never touch the network or spend budget, even with real keys in `.env` |
 | 2026-11-05 | Release tags are pushed with plain git from PowerShell (`git tag -a vX.Y.Z` + `git push origin vX.Y.Z`); every other `make` target runs from WSL Ubuntu, as `infra/README.md` says | `make` isn't installed on Windows; `make release` is only those two git commands |
 | 2026-11-05 | **Framework: Microsoft Agent Framework** (`agent-framework-core==1.24.0`, pinned in both requirements files). `workflow.build_workflow()` is a `WorkflowBuilder` graph: intake → fan-out [policy_limits, fraud]; policy_limits → fan-out [policy_retrieve, cost]; fan-in [policy_retrieve, cost, fraud] → manager → human_desk. Each agent is an `@executor`; the edge message is the claim id; agents still share data only via the claim-state record | MAF is Microsoft's successor to Semantic Kernel (1.0 GA Apr 2026); its fan-out / fan-in edge groups map 1:1 onto the brief; the core package has no model-SDK or PyTorch deps, so it runs on the 1 GB servers (checked: scenario 1 HTTP 200 in 0.3 s). Decided by merging PR "Move the workflow onto Microsoft Agent Framework" |
 | 2026-11-05 | Demo = `demo.ipynb` (executed, outputs saved): claim + bill, live agent trace from the run log, decision card + deduction table, scenario 4 reviewer step, 7-scenario expected-vs-actual table. Generated by a script so it can be rebuilt | M14; the trace shows Policy/Fraud interleaving and Cost starting on the posted limits |
@@ -85,7 +91,8 @@ This is the single source of truth for where the project stands. Read it at the 
 - [ ] Solo scope: keep all seven agents, or drop the Grievance Drafter (S2 only)? The Human Review Desk stays, because M11 is a must-have.
 - [x] Framework: Microsoft Agent Framework, `agent-framework-core==1.24.0` (2026-11-05).
 - [ ] Which other 2–3 policy wordings to add (ASJ-01 = IFFCO Tokio wording, decided 2026-11-04). Scenarios only need ASJ-01 + GHC-01.
-- [ ] Which model lane / API key the team will use (fill `.env` from `.env.example`).
+- [x] Model lane: Groq first, NVIDIA build (Nemotron) second, rules as fallback (2026-11-10); keys in `.env` from `.env.example`.
+- [ ] (DevOps) Use the LLM on the AWS servers? Default is no key there → rules only. If yes, put `GROQ_API_KEY` in Ansible Vault and template it into the service env.
 - [x] Shapes of `policies.json` and `data/claims/` agreed (2026-11-04, `data/README.md`).
 - [x] IFFCO wording PDF downloaded and every scenario/limit clause id checked against it (2026-11-04, `tests/test_retrieval.py`).
 - [x] Commit only the chunked text (`data/corpus/chunks.jsonl`); PDFs stay git-ignored (2026-11-04).
@@ -118,7 +125,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
 | — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged 2026-11-04; release **v0.1.0** published 2026-11-05 (tarball + sha256, release workflow green); next: WSL setup, `make up ENV=dev` on AWS |
-| M1 | Claim intake → structured record | A | In progress | Rule-based `extract_claim_fields` + Intake Agent done (2026-11-05), all 7 claims extract correctly; LLM extraction path waits for a model lane + API key |
+| M1 | Claim intake → structured record | A | In progress | Rule-based `extract_claim_fields` + Intake Agent done (2026-11-05); 2026-11-10 LLM path built on branch `feat/m1-llm-intake` (Groq qwen3.8-27b → NVIDIA Nemotron 3.5 Lightning → rules, capped, rules-win cross-check); live tests pass, 7/7 scenarios match with the LLM on — Done once the PR is merged |
 | M2 | Halt on missing policy id / amount | A | Done | 2026-11-05 `IntakeHalt(reason)` + `set_halt`; scenario 7 halts, nothing downstream runs |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Done | 2026-11-04 chunking (202 chunks); 2026-11-05 `search_policy_clauses`, `get_policy_limits`, `search_irdai_rules` (BM25, 0–1 IDF-coverage score, policy filter); `tests/test_search.py` |
 | M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
@@ -156,6 +163,10 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-10** · Suharshit + Claude · Keys in `.env`; first ping failed (Groq 404, NVIDIA 410 — both models gone). Listed each key's models, tried the claim-1 extraction on five candidates, switched to `qwen/qwen3.8-27b` (Groq) and `nemotron-3.5-lightning-30b-a3b` (NVIDIA); added `models` command + retired-model hint. `ping` OK on both; `pytest -m live` 4 passed; `pytest` 291 passed / 1 skipped; all 7 scenarios end to end with the real LLM on match expected, Groq agreeing on all 10 fields for 1–6 (7 halts before the LLM). · Next: push `feat/m1-llm-intake`, PR, merge → M1 Done.
+
+- **2026-11-10** · Claude (Suharshit's go-ahead) · Reviewed status (build complete, M1 LLM path the only open must-have, 5 days left). Compared free model lanes (Ollama, Hugging Face, NVIDIA build, Groq, OpenRouter, Kaggle) and chose Groq → NVIDIA Nemotron → rules. Branch `feat/m1-llm-intake`: `tools/llm_client.py` (OpenAI-compatible client, provider fallback, usage ledger with per-day/per-minute request and token caps, 429 blocking, `python -m tools.llm_client` status / `ping`), `llm_extract_claim_fields` + `reconcile_fields` in `tools/intake_tools.py`, Intake Agent cross-check with budget-left in the log, `GET /llm/usage`, `config.yaml` `llm:` block, `.env.example`, `tests/conftest.py`, `tests/test_llm_client.py` (23 offline tests), `tests/test_llm_live.py` (4 live tests, `-m live`). pytest 289 passed / 1 skipped / 4 live deselected; ruff clean. Not done from the session: real keys, live run, push, PR. · Next: Suharshit adds keys, runs `pytest -m live -s`, pushes and opens the PR; then slides + viva prep.
 
 - **2026-11-05** · Suharshit · Tagged and pushed `v0.1.0` from PowerShell (`make` isn't on Windows); release workflow green, GitHub Release has `claimlens.tar.gz` + `.sha256`. · Next: WSL one-time setup, `make up ENV=dev`.
 

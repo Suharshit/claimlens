@@ -77,12 +77,20 @@ Next, from **WSL Ubuntu** (`wsl --install -d Ubuntu-22.04` once), follow `infra/
 check** (POST `/claims/CLM-0001/run`) is green → rehearse the S11 runbook (stop the app, edit nginx) and
 `make down` when done. Fill `deadline:` in `pipeline.config.yml` with the INT333 demo date.
 
-### 5. Optional: model lane + LLM intake (½ day)
+### 5. LLM intake — built on `feat/m1-llm-intake` (2026-11-10)
 
-Extraction (`extract_claim_fields`) is a deterministic rule-based parser that handles all seven claims; CI
-and the tests use it. If you want an LLM in the loop for the viva: pick the course model lane, put the key
-in `.env` (never commit it), and ask Claude to add the LLM path (an MAF chat agent with the `ClaimIntake`
-schema, falling back to the rules when no key is set). If deployed, the key goes in Ansible Vault.
+Model lane: Groq (`qwen/qwen3.8-27b`) → NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`) → rules.
+The rules still extract first and decide any halt; the LLM is a second reading and the rules win every
+disagreement (logged). Calls are capped below each free tier (`config.yaml` `llm:`), counted in
+`state/llm_usage.json`. To finish:
+
+1. Free keys: https://console.groq.com/keys and https://build.nvidia.com → put them in `.env`
+   (copy `.env.example`; never commit `.env`).
+2. `python -m tools.llm_client` → both keys show "set"; `python -m tools.llm_client ping` → both OK.
+3. `pytest` (offline, must stay green) and `pytest -m live -s` (real calls, prints budget left).
+4. Push the branch, open the PR, let `ci` go green, merge.
+5. Optional: re-run `demo.ipynb` so the trace shows the `reconcile_fields` step with the budget left.
+6. Servers: no key = rules only. To use the LLM there, put `GROQ_API_KEY` in Ansible Vault.
 
 ### 6. Submission pieces (1–2 days)
 
