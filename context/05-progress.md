@@ -170,6 +170,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
 
+- **2026-11-11** · Claude (Suharshit's request) · Website Architecture tab: the low-res `architecture.png` replaced by an inline, tall SVG drawn from `architecture.mmd` — main flow down the middle, halt branch left, fan-out band, fan-in to the Manager, escalation triggers in the Human Review Desk box, and the shared claim-state record + run log as a full-height rail with each agent's dashed write to its own section; adds the LLM second reading on Intake. Checked in a headless browser. · Next: merge `feat/s4-demo-website`; slides; viva prep; AWS deploy.
+
 - **2026-11-10** · Claude (Suharshit chose the web page: "benefit both courses") · Branch `feat/s4-demo-website`: FastAPI-served demo site (`web/index.html`, 4 JSON routes), `tests/test_web.py`; checked in a headless browser (runs, review flow, clause pop-up, 7/7 evaluation, no console errors). Found and fixed a real bug: re-running an escalated claim lost its review ticket. README run line mentions the site (still 2 pages). pytest 306 passed. · Next: merge both branches; slides; viva prep; AWS deploy.
 
 - **2026-11-10** · Suharshit + Claude · Demo re-run (trace shows `reconcile_fields` + budget left on claims 1–6; verdicts unchanged). README updated for the LLM path and cut from 4 rendered pages to 2. Sample run force-added. All on branch `docs/progress-m1-done` (5 commits). pytest 291 passed. · Next: push + merge; then the demo website (S4).
