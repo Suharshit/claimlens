@@ -6,12 +6,15 @@ This is the single source of truth for where the project stands. Read it at the 
 - **Phase:** All must-haves (M1–M15) done — LLM intake merged (#15); all seven scenarios pass end to end with and without the LLM; submission pieces and should-haves left
 - **Current week:** Week 3 / final week by calendar (10 Nov); deadline 15 Nov
 - **Last updated:** 2026-11-10
-- **Next action (Suharshit):** push `docs/progress-m1-done` and merge (progress, demo re-run, README, sample run). Then the demo website (S4), slides + viva prep, INT333 `make up ENV=dev`. Full list: `HANDOFF.md`.
+- **Next action (Suharshit):** push `docs/progress-m1-done` → PR → merge; then push `feat/s4-demo-website` → PR → merge. Try the site: `python api.py` → http://localhost:8000. Then slides + viva prep, INT333 `make up ENV=dev` (the site comes with it). Full list: `HANDOFF.md`.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-10 | **S4 demo UI = a web page served by the FastAPI app** (`web/index.html` at `GET /`, JSON routes `/api/claims`, `/api/claims/{id}`, `/api/claims/{id}/review`, `/api/clauses/{id}`) instead of the Streamlit `app.py` planned in 04 | Benefits both courses: the CSE476 demo and the app the INT333 pipeline already deploys to AWS (Streamlit can't run on the 1 GB servers); no new dependency; vanilla HTML/JS, no CDN, so it works offline at the viva. 04 left unchanged; this row supersedes its Streamlit line |
+| 2026-11-10 | The website's Evaluation tab is the S6 accuracy table: expected (hand-worked `expected.json`) vs actual per scenario, same verdict + payout check as `tests/test_scenarios.py` | No separate S6 artefact needed; 7/7 shown live |
+| 2026-11-10 | Fix: `create_review_ticket` writes an existing open ticket back into the record | A re-run of an escalated claim (`reset_state`) left it escalated with no ticket, so it could never be reviewed — found while testing the website's Run-again button; regression test in `test_scenarios.py` |
 | 2026-11-10 | README rewritten to fit 2 A4 pages with the diagram (it rendered to 4): diagram floated right at 215 px beside the architecture/money/fraud/memory text, roster drops the Writes column (sections match agent names), memory table folded into prose, LLM intake paragraph added, test count 291 + 4 live | Deliverable limit is 2 pages; `architecture.png` is also a separate deliverable at full size |
 | 2026-11-10 | The Indian health-claims variant is taken as a valid Q1 answer; no instructor confirmation needed | The professor is open to both generic and domain variants; the architecture maps 1:1 onto Q1 (five named agents, fan-out / fan-in, human routing). Corpus stays the IFFCO wording + IRDAI lists; partial approve stays as a fourth verdict |
 | 2026-11-10 | **Model lane: free open-weight models over OpenAI-compatible APIs** — Groq (`qwen/qwen3.8-27b`, reasoning hidden) first, NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`, thinking off) second, rule-based extractor last. Keys `GROQ_API_KEY` / `NVIDIA_API_KEY` in `.env`; providers, models and caps in `config.yaml` `llm:` | No cost, no card; Groq has the clearest free limits and is fast for a live demo; Nemotron gives an NVIDIA open model as backup. Ruled out: Ollama (7.3 GB laptop, servers can't host a model), Hugging Face (≈$0.10/month free credit), OpenRouter (50 free requests/day), Kaggle (GPU notebooks, not an API) |
@@ -142,12 +145,12 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | M13 | Append-only run log | C | Done | 2026-11-04 `tools/logger.py`, tests in `tests/test_state_log.py` |
 | M14 | Demo notebook with trace | C | Done | 2026-11-05 `demo.ipynb` — 7/7 scenarios match |
 | M15 | Test file (≥ 3 scenarios; plan 7) | A | Done | 2026-11-05 `tests/test_scenarios.py`: all 7 scenarios end to end + parallelism, section ownership, re-run and append-only log tests |
-| S1 | Deduction table in output | A | In progress | Table produced by `compute_payable` (item, amount, reason, clause); showing it in the notebook/UI comes later |
+| S1 | Deduction table in output | A | Done | Table from `compute_payable` (item, amount, reason, clause), shown in `demo.ipynb` and on the website with clickable clause ids |
 | S2 | Grievance letter draft | — | Not started | |
 | S3 | Missing-document check | — | Not started | |
-| S4 | Streamlit UI | — | Not started | |
+| S4 | Demo UI (web page, not Streamlit — see decisions) | C | In progress | 2026-11-10 built on `feat/s4-demo-website`: claim list, run, decision card, clause pop-ups, deductions, fraud gauge, agent timeline lanes, live trace, Human Review Desk form, Evaluation and Architecture tabs; `tests/test_web.py` (14). Done once merged |
 | S5 | Retrieval hit@3 check | B | Not started | |
-| S6 | Accuracy table | A | Not started | |
+| S6 | Accuracy table | A | In progress | 2026-11-10 the website's Evaluation tab (expected vs actual, 7/7); Done with S4's merge |
 
 ## Submission checklist
 - [x] Built on Microsoft Agent Framework (`workflow.py`)
@@ -166,6 +169,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-10** · Claude (Suharshit chose the web page: "benefit both courses") · Branch `feat/s4-demo-website`: FastAPI-served demo site (`web/index.html`, 4 JSON routes), `tests/test_web.py`; checked in a headless browser (runs, review flow, clause pop-up, 7/7 evaluation, no console errors). Found and fixed a real bug: re-running an escalated claim lost its review ticket. README run line mentions the site (still 2 pages). pytest 306 passed. · Next: merge both branches; slides; viva prep; AWS deploy.
 
 - **2026-11-10** · Suharshit + Claude · Demo re-run (trace shows `reconcile_fields` + budget left on claims 1–6; verdicts unchanged). README updated for the LLM path and cut from 4 rendered pages to 2. Sample run force-added. All on branch `docs/progress-m1-done` (5 commits). pytest 291 passed. · Next: push + merge; then the demo website (S4).
 

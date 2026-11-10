@@ -4,7 +4,7 @@
 
 ClaimLens reads an Indian health-insurance claim and its hospital bill, checks both against the policy wording and IRDAI rules, and returns **approve, partial approve, reject or escalate**, with the payout and the clause behind every rupee deducted. CSE476 CA2 Project 2, Q1: multi-agent RAG with fan-out / fan-in and human routing.
 
-**Run it:** `pip install -r requirements.txt` · `pytest` · open [`demo.ipynb`](demo.ipynb). Optional LLM: free Groq / NVIDIA keys in `.env` (see `.env.example`); without keys it runs on the rules.
+**Run it:** `pip install -r requirements.txt` · `pytest` · [`demo.ipynb`](demo.ipynb) · demo website: `python api.py` → http://localhost:8000. Optional LLM: free Groq / NVIDIA keys in `.env` (see `.env.example`); without keys it runs on the rules.
 
 ## Agent roster
 
