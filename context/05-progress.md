@@ -6,12 +6,13 @@ This is the single source of truth for where the project stands. Read it at the 
 - **Phase:** All must-haves (M1–M15) done — LLM intake merged (#15); all seven scenarios pass end to end with and without the LLM; submission pieces and should-haves left
 - **Current week:** Week 3 / final week by calendar (10 Nov); deadline 15 Nov
 - **Last updated:** 2026-11-10
-- **Next action (Suharshit):** re-run `demo.ipynb` (trace now shows the LLM cross-check) + force-add a sample run; check README page count; slides + viva prep; INT333 `make up ENV=dev` on AWS from WSL. Then cheap should-haves S5/S6. Full list: `HANDOFF.md`.
+- **Next action (Suharshit):** push `docs/progress-m1-done` and merge (progress, demo re-run, README, sample run). Then the demo website (S4), slides + viva prep, INT333 `make up ENV=dev`. Full list: `HANDOFF.md`.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-10 | README rewritten to fit 2 A4 pages with the diagram (it rendered to 4): diagram floated right at 215 px beside the architecture/money/fraud/memory text, roster drops the Writes column (sections match agent names), memory table folded into prose, LLM intake paragraph added, test count 291 + 4 live | Deliverable limit is 2 pages; `architecture.png` is also a separate deliverable at full size |
 | 2026-11-10 | The Indian health-claims variant is taken as a valid Q1 answer; no instructor confirmation needed | The professor is open to both generic and domain variants; the architecture maps 1:1 onto Q1 (five named agents, fan-out / fan-in, human routing). Corpus stays the IFFCO wording + IRDAI lists; partial approve stays as a fourth verdict |
 | 2026-11-10 | **Model lane: free open-weight models over OpenAI-compatible APIs** — Groq (`qwen/qwen3.8-27b`, reasoning hidden) first, NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`, thinking off) second, rule-based extractor last. Keys `GROQ_API_KEY` / `NVIDIA_API_KEY` in `.env`; providers, models and caps in `config.yaml` `llm:` | No cost, no card; Groq has the clearest free limits and is fast for a live demo; Nemotron gives an NVIDIA open model as backup. Ruled out: Ollama (7.3 GB laptop, servers can't host a model), Hugging Face (≈$0.10/month free credit), OpenRouter (50 free requests/day), Kaggle (GPU notebooks, not an API) |
 | 2026-11-10 | Models re-picked after the first live ping: Groq had dropped `llama-3.3-70b-versatile` (404) and NVIDIA retired `nemotron-3-nano-30b-a3b` on 2026-09-01 (410). Tried the claim-1 extraction on each candidate: `qwen/qwen3.8-27b` 10/10 fields agree, 0.6 s; `openai/gpt-oss-120b` 9/10; `nemotron-3.5-lightning-30b-a3b` 10/10; `nemotron-nano-3-30b-a3b` and `nemotron-3-super-120b-a12b` 404 for this account. Added `python -m tools.llm_client models` and a 404/410 hint | Free catalogs change without notice; the fix is a config edit, and the tool now says so |
@@ -153,7 +154,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 - [x] ≥ 4 agents, one module each (7)
 - [x] Every agent calls ≥ 2 Python tools
 - [x] RAG grounding + shared state used by every agent
-- [x] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure) — check the page count when exported with the diagram
+- [x] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure) — checked 2026-11-10: exactly 2 A4 pages rendered with the diagram (floated beside the details)
+- [x] Sample run committed (`logs/run_log.jsonl`, `state/CLM-0001.json`, `state/CLM-0004.json`, force-added 2026-11-10)
 - [x] Runnable demo notebook with multi-agent trace (`demo.ipynb`)
 - [x] Architecture diagram (`architecture.png`)
 - [x] Append-only run log (M13)
@@ -164,6 +166,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-10** · Suharshit + Claude · Demo re-run (trace shows `reconcile_fields` + budget left on claims 1–6; verdicts unchanged). README updated for the LLM path and cut from 4 rendered pages to 2. Sample run force-added. All on branch `docs/progress-m1-done` (5 commits). pytest 291 passed. · Next: push + merge; then the demo website (S4).
 
 - **2026-11-10** · Suharshit · Decided the Indian variant counts as Q1 (professor open to both); open question closed. · Next: unchanged.
 
