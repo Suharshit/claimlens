@@ -3,10 +3,10 @@
 This is the single source of truth for where the project stands. Read it at the start of every chat. Update it at the end of every working session: change task statuses, add a session-log entry (newest first), and record any decision or open question.
 
 ## Current status
-- **Phase:** Build complete on deterministic orchestration — all seven scenarios pass end to end; demo notebook, README and diagram done
+- **Phase:** All must-haves (M1–M15) done — LLM intake merged (#15); all seven scenarios pass end to end with and without the LLM; submission pieces and should-haves left
 - **Current week:** Week 3 / final week by calendar (10 Nov); deadline 15 Nov
 - **Last updated:** 2026-11-10
-- **Next action (Suharshit):** push `feat/m1-llm-intake`, open the PR, merge once `ci` is green (keys in, live tests pass, 7/7 with the LLM on) → M1 Done. Then slides + viva prep; INT333 `make up ENV=dev` on AWS from WSL. Full list: `HANDOFF.md`.
+- **Next action (Suharshit):** re-run `demo.ipynb` (trace now shows the LLM cross-check) + force-add a sample run; check README page count; slides + viva prep; INT333 `make up ENV=dev` on AWS from WSL. Then cheap should-haves S5/S6. Full list: `HANDOFF.md`.
 
 ## Decisions made
 
@@ -125,7 +125,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
 | — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged 2026-11-04; release **v0.1.0** published 2026-11-05 (tarball + sha256, release workflow green); next: WSL setup, `make up ENV=dev` on AWS |
-| M1 | Claim intake → structured record | A | In progress | Rule-based `extract_claim_fields` + Intake Agent done (2026-11-05); 2026-11-10 LLM path built on branch `feat/m1-llm-intake` (Groq qwen3.8-27b → NVIDIA Nemotron 3.5 Lightning → rules, capped, rules-win cross-check); live tests pass, 7/7 scenarios match with the LLM on — Done once the PR is merged |
+| M1 | Claim intake → structured record | A | Done | Rule-based `extract_claim_fields` (2026-11-05) + LLM path (Groq qwen3.8-27b → NVIDIA Nemotron 3.5 Lightning → rules, capped, rules-win cross-check), PR #15 merged 2026-11-10; live tests pass, 7/7 scenarios match with the LLM on |
 | M2 | Halt on missing policy id / amount | A | Done | 2026-11-05 `IntakeHalt(reason)` + `set_halt`; scenario 7 halts, nothing downstream runs |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Done | 2026-11-04 chunking (202 chunks); 2026-11-05 `search_policy_clauses`, `get_policy_limits`, `search_irdai_rules` (BM25, 0–1 IDF-coverage score, policy filter); `tests/test_search.py` |
 | M4 | Deterministic payable calculation | A | Done | 2026-11-04 `classify_items`, `room_rent_deduction`, `compute_payable` in `tools/cost_tools.py`; reproduces scenarios 1, 2, 4, 5, 6 row for row; `tests/test_cost_tools.py` |
@@ -163,6 +163,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-10** · Suharshit · PR #15 (`feat/m1-llm-intake`) merged → M1 Done; every must-have complete. · Next: re-run demo + sample run, README page check, slides, viva prep, AWS deploy; then S5/S6.
 
 - **2026-11-10** · Suharshit + Claude · Keys in `.env`; first ping failed (Groq 404, NVIDIA 410 — both models gone). Listed each key's models, tried the claim-1 extraction on five candidates, switched to `qwen/qwen3.8-27b` (Groq) and `nemotron-3.5-lightning-30b-a3b` (NVIDIA); added `models` command + retired-model hint. `ping` OK on both; `pytest -m live` 4 passed; `pytest` 291 passed / 1 skipped; all 7 scenarios end to end with the real LLM on match expected, Groq agreeing on all 10 fields for 1–6 (7 halts before the LLM). · Next: push `feat/m1-llm-intake`, PR, merge → M1 Done.
 
