@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClaimLens — claim adjudication demo</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --ink: #18202b; --muted: #5b6573; --line: #e2e5ea;
+    --brand: #1d4ed8; --brand-ink: #ffffff;
+    --approve: #15803d; --approve-bg: #e8f6ed; --partial: #b45309; --partial-bg: #fdf3e3;
+    --reject: #b91c1c; --reject-bg: #fdecec; --escalate: #6d28d9; --escalate-bg: #f1ebfd;
+    --halt: #475569; --halt-bg: #eef1f5;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 24px; background: var(--panel); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; }
+  .brand { font-weight: 700; font-size: 18px; letter-spacing: -0.01em; }
+  .brand small { font-weight: 400; color: var(--muted); font-size: 13px; margin-left: 8px; }
+  .spacer { flex: 1; }
+  .pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .pill b { color: var(--ink); font-weight: 600; }
+  .disclaimer { background: #fff8db; border-bottom: 1px solid #f0e2a4; color: #6b5a12; font-size: 12.5px; padding: 6px 24px; }
+  .layout { display: grid; grid-template-columns: 290px 1fr; min-height: calc(100vh - 92px); }
+  aside { background: var(--panel); border-right: 1px solid var(--line); padding: 16px; }
+  aside .stick { position: sticky; top: 70px; }
+  aside h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; }
+  .claim-item { display: block; width: 100%; text-align: left; border: 1px solid transparent; background: none; padding: 9px 10px; border-radius: 8px; cursor: pointer; font: inherit; color: inherit; margin-bottom: 2px; }
+  .claim-item:hover { background: var(--bg); }
+  .claim-item.active { background: #eef3ff; border-color: #c9d7fb; }
+  .claim-item .id { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+  .claim-item .t { font-weight: 600; display: block; }
+  .claim-item .row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+  main { padding: 20px 28px 40px; min-width: 0; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .tab { border: none; background: none; font: inherit; padding: 8px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: var(--ink); border-bottom-color: var(--brand); font-weight: 600; }
+  .btn { font: inherit; font-weight: 600; border-radius: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+  .btn.primary { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+  .btn:disabled { opacity: .55; cursor: progress; }
+  .btn.block { width: 100%; margin-top: 12px; }
+  .title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .title-row h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 16px; min-width: 0; }
+  .card h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  pre.claim { white-space: pre-wrap; font: 13.5px/1.55 system-ui, sans-serif; margin: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tfoot td { font-weight: 700; border-bottom: none; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+  .v-approve { color: var(--approve); background: var(--approve-bg); }
+  .v-partial { color: var(--partial); background: var(--partial-bg); }
+  .v-reject { color: var(--reject); background: var(--reject-bg); }
+  .v-escalate { color: var(--escalate); background: var(--escalate-bg); }
+  .v-halt, .v-none { color: var(--halt); background: var(--halt-bg); }
+  .s-closed { color: var(--approve); background: var(--approve-bg); }
+  .s-escalated { color: var(--escalate); background: var(--escalate-bg); }
+  .s-intake, .s-new { color: var(--halt); background: var(--halt-bg); }
+  .clause { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 6px; background: #eef3ff; color: #1e3a8a; border: 1px solid #d5e0fb; cursor: pointer; margin: 0 4px 4px 0; display: inline-block; }
+  .decision { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; }
+  .verdict-big { font-size: 22px; font-weight: 800; padding: 10px 18px; border-radius: 12px; text-transform: capitalize; }
+  .money { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .money small { font-size: 14px; color: var(--muted); font-weight: 500; }
+  .kv { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  .kv b { color: var(--ink); }
+  .check { font-size: 13px; margin-top: 10px; padding: 8px 10px; border-radius: 8px; }
+  .check.ok { background: var(--approve-bg); color: var(--approve); }
+  .check.bad { background: var(--reject-bg); color: var(--reject); }
+  .bar { position: relative; height: 10px; background: var(--bg); border-radius: 999px; overflow: visible; margin: 8px 0 4px; }
+  .bar > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; }
+  .bar .mark { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink); }
+  .lanes { display: grid; grid-template-columns: 130px 1fr; gap: 6px 10px; align-items: center; font-size: 12.5px; }
+  .lane { position: relative; height: 16px; background: var(--bg); border-radius: 4px; }
+  .lane span { position: absolute; top: 2px; bottom: 2px; border-radius: 3px; min-width: 4px; }
+  .trace { max-height: 420px; overflow: auto; font-size: 12.5px; }
+  .trace .ev { display: grid; grid-template-columns: 62px 128px 170px 1fr; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--line); animation: pop .25s ease-out both; }
+  .trace .ev .ms { color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
+  .trace .ev .tool { font-family: var(--mono); font-size: 12px; }
+  .agent { font-weight: 600; }
+  @keyframes pop { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .muted { color: var(--muted); }
+  .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+  form.review { display: grid; gap: 10px; }
+  form.review .opts { display: flex; gap: 14px; }
+  form.review textarea, form.review input[type=text], form.review input[type=number] { font: inherit; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; width: 100%; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(15, 23, 42, .45); display: none; align-items: center; justify-content: center; z-index: 20; padding: 20px; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--panel); border-radius: 12px; max-width: 720px; width: 100%; max-height: 80vh; overflow: auto; padding: 20px 22px; }
+  .modal pre { white-space: pre-wrap; font: 13px/1.55 system-ui, sans-serif; }
+  .acc { font-size: 32px; font-weight: 800; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; padding: 16px; border-top: 1px solid var(--line); background: var(--panel); }
+  .arch img { max-width: 100%; height: auto; max-height: 75vh; display: block; margin: 0 auto; }
+  @media (max-width: 900px) { aside .stick { position: static; } .layout { grid-template-columns: 1fr; } .grid2 { grid-template-columns: 1fr; } aside { border-right: none; border-bottom: 1px solid var(--line); } }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">ClaimLens <small>multi-agent health-claim adjudication</small></div>
+  <div class="spacer"></div>
+  <span class="pill" id="llm-pill" title="LLM budget left today (Intake's second reading)">LLM: …</span>
+  <span class="pill" id="version-pill">…</span>
+</header>
+<div class="disclaimer">Educational prototype — not insurance, legal or medical advice. Synthetic claims only.</div>
+
+<div class="layout">
+  <aside>
+    <div class="stick">
+    <h2>Demo claims</h2>
+    <div id="claim-list"><div class="muted">Loading…</div></div>
+    <button class="btn block" id="run-all">Run all 7 scenarios</button>
+    </div>
+  </aside>
+
+  <main>
+    <div class="tabs">
+      <button class="tab active" data-tab="claim">Claim</button>
+      <button class="tab" data-tab="eval">Evaluation</button>
+      <button class="tab" data-tab="arch">Architecture</button>
+    </div>
+    <section id="tab-claim"><div class="empty">Pick a claim on the left.</div></section>
+    <section id="tab-eval" hidden></section>
+    <section id="tab-arch" hidden class="arch">
+      <div class="card">
+        <h3>How it runs</h3>
+        <p>Intake runs first. <b>Policy Retrieval and Fraud Signal then run in parallel</b>; <b>Cost waits only for the policy limits</b>; the <b>Manager fans in</b> and is the one place a verdict is made; escalations go to the <b>Human Review Desk</b>. Agents share one claim-state record and never import each other. All money maths is deterministic Python; the LLM only gives Intake a second reading of the claim, and the rules win any disagreement.</p>
+        <img src="/architecture.png" alt="ClaimLens architecture diagram">
+      </div>
+    </section>
+  </main>
+</div>
+
+<footer>Educational prototype — not insurance, legal or medical advice. · CSE476 CA2 Project 2</footer>
+
+<div class="modal-bg" id="modal"><div class="modal"><div id="modal-body"></div><button class="btn" id="modal-close" style="margin-top:12px">Close</button></div></div>
+
+<script>
+const AGENTS = {
+  workflow: ["Workflow", "#64748b"], intake_agent: ["Intake", "#0f766e"], policy_agent: ["Policy Retrieval", "#1d4ed8"],
+  fraud_agent: ["Fraud Signal", "#c2410c"], cost_agent: ["Cost Assessment", "#a16207"],
+  manager_agent: ["Manager", "#6d28d9"], human_desk: ["Human Desk", "#be185d"],
+};
+const LANE_ORDER = ["intake_agent", "policy_agent", "fraud_agent", "cost_agent", "manager_agent", "human_desk"];
+const REASONS = {
+  high_value: "claimed amount above ₹2,00,000", fraud_risk: "fraud score ≥ 60", no_grounding: "no grounding clause found",
+  citation_failed: "a cited clause was not retrieved", low_confidence: "confidence below 0.6",
+};
+const state = { claims: [], current: null, busy: false };
+
+const $ = (sel) => document.querySelector(sel);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const inr = (n) => (n === null || n === undefined) ? "—" : "₹" + Number(n).toLocaleString("en-IN");
+const vclass = (v) => "v-" + (v || "none");
+const sclass = (s) => "s-" + (s || "new");
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body?.detail?.error || body?.detail?.[0]?.msg || res.statusText);
+  return body;
+}
+
+// ---------------------------------------------------------------- header
+
+async function loadHeader() {
+  api("/version").then((v) => { $("#version-pill").innerHTML = `version <b>${esc(v.version)}</b>`; }).catch(() => {});
+  refreshLlm();
+}
+async function refreshLlm() {
+  try {
+    const u = await api("/llm/usage");
+    if (!u.llm_enabled) { $("#llm-pill").innerHTML = "LLM: <b>off</b> · rules only"; return; }
+    const live = u.providers.filter((p) => p.key_set);
+    if (!live.length) { $("#llm-pill").innerHTML = "LLM: <b>no key</b> · rules only"; return; }
+    $("#llm-pill").innerHTML = live.map((p) => {
+      const left = p.left.requests_per_day, cap = p.caps.requests_per_day;
+      return `${esc(p.provider)} <b>${left ?? "∞"}${cap ? "/" + cap : ""}</b>`;
+    }).join(" · ") + " requests left today";
+  } catch { $("#llm-pill").textContent = "LLM: unavailable"; }
+}
+
+// ---------------------------------------------------------------- claim list
+
+async function loadClaims() {
+  const data = await api("/api/claims");
+  state.claims = data.claims;
+  renderList();
+  if (!state.current && state.claims.length) selectClaim(state.claims[0].claim_id);
+  renderEval();
+}
+function renderList() {
+  $("#claim-list").innerHTML = state.claims.map((c) => {
+    const cur = c.current;
+    const status = cur ? cur.status : "new";
+    const label = cur ? (cur.verdict || status) : "not run";
+    return `<button class="claim-item ${state.current === c.claim_id ? "active" : ""}" data-id="${esc(c.claim_id)}">
+      <div class="row"><span class="id">${esc(c.claim_id)} · #${esc(c.scenario)}</span>
+      <span class="chip ${cur ? vclass(cur.verdict) : "v-none"}">${esc(label)}</span></div>
+      <span class="t">${esc(c.title)}</span>
+      ${cur ? `<span class="chip ${sclass(status)}" style="margin-top:3px">${esc(status)}</span>` : ""}
+    </button>`;
+  }).join("");
+  document.querySelectorAll(".claim-item").forEach((b) => b.onclick = () => selectClaim(b.dataset.id));
+}
+
+// ---------------------------------------------------------------- one claim
+
+async function selectClaim(id, { animate = false } = {}) {
+  state.current = id;
+  renderList();
+  showTab("claim");
+  const d = await api(`/api/claims/${id}`);
+  renderClaim(d, animate);
+}
+
+function renderClaim(d, animate) {
+  const meta = state.claims.find((c) => c.claim_id === d.claim_id) || {};
+  const exp = d.expected || {};
+  const rec = d.record;
+  const billTotal = (d.bill || []).reduce((s, i) => s + i.amount, 0);
+  const expLabel = exp.verdict ? `${exp.verdict}${exp.payable != null ? " · " + inr(exp.payable) : ""}` : (exp.halt ? "halt: " + exp.halt : "—");
+
+  let html = `<div class="title-row">
+      <h1>${esc(d.claim_id)} · ${esc(meta.title || "")}</h1>
+      <span class="chip ${vclass(exp.verdict || (exp.halt ? "halt" : null))}" title="Hand-worked expected outcome">expected: ${esc(expLabel)}</span>
+      <div class="spacer"></div>
+      <button class="btn primary" id="run-one">${rec ? "Run again" : "Run ClaimLens"}</button>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Claim message</h3><pre class="claim">${esc(d.claim_text.replace(/\r\n/g, "\n").replace(/([^\n])\n(?!\n)/g, "$1 "))}</pre></div>
+      <div class="card"><h3>Hospital bill</h3>${d.bill ? `
+        <table><thead><tr><th>Item</th><th>Category</th><th class="num">Qty</th><th class="num">Amount</th></tr></thead>
+        <tbody>${d.bill.map((i) => `<tr><td>${esc(i.desc)}</td><td class="muted">${esc(i.category)}</td><td class="num">${i.qty}</td><td class="num">${inr(i.amount)}</td></tr>`).join("")}</tbody>
+        <tfoot><tr><td colspan="3">Total</td><td class="num">${inr(billTotal)}</td></tr></tfoot></table>`
+        : `<div class="muted">${esc(d.bill_error || "no bill")}</div>`}</div>
+    </div>`;
+
+  if (!rec) {
+    html += `<div class="card empty">Not run yet. Press <b>Run ClaimLens</b> to send this claim through the agents.</div>`;
+  } else if (rec.halt) {
+    html += `<div class="card"><h3>Intake halted</h3>
+      <div class="decision"><div class="verdict-big v-halt">halt</div>
+      <div><div><b>${esc(rec.halt.reason)}</b></div><div class="kv">${esc(rec.halt.message)}</div>
+      <div class="kv">No downstream agent ran — the claim waits for the missing data.</div></div></div>
+      ${checkLine(exp, rec)}</div>`;
+  } else {
+    html += decisionCard(rec, exp) + reviewCard(rec) + costCard(rec) + fraudCard(rec);
+  }
+  if (rec) html += traceCard(d.trace);
+  $("#tab-claim").innerHTML = html;
+
+  $("#run-one").onclick = () => runClaim(d.claim_id);
+  document.querySelectorAll(".clause").forEach((el) => el.onclick = () => showClause(el.dataset.id));
+  const form = $("#review-form");
+  if (form) wireReview(form, d.claim_id, rec);
+  if (rec) playTrace(d.trace, animate);
+}
+
+function checkLine(exp, rec) {
+  if (!exp) return "";
+  const s = rec.decision || {};
+  let ok, text;
+  if (exp.halt) { ok = rec.halt && rec.halt.reason === exp.halt; text = `expected halt (${exp.halt})`; }
+  else { ok = s.verdict === exp.verdict && s.payout === exp.payable; text = `expected ${exp.verdict} ${inr(exp.payable)}`; }
+  return `<div class="check ${ok ? "ok" : "bad"}">${ok ? "✓ Matches" : "✗ Differs from"} the hand-worked result: ${esc(text)}</div>`;
+}
+
+function decisionCard(rec, exp) {
+  const dec = rec.decision || {};
+  const h = rec.human || {};
+  const claimed = rec.intake ? rec.intake.claimed : null;
+  const conf = dec.confidence ?? 0;
+  const reasons = (dec.escalation_reasons || []).map((r) => `<span class="chip v-escalate" style="margin-right:4px">${esc(REASONS[r] || r)}</span>`).join("");
+  return `<div class="card"><h3>Decision</h3>
+    <div class="decision">
+      <div class="verdict-big ${vclass(dec.verdict)}">${esc(dec.verdict || "—")}</div>
+      <div>
+        <div class="money">${inr(dec.payout)} <small>payable of ${inr(claimed)} claimed</small></div>
+        <div class="kv">Status <span class="chip ${sclass(rec.status)}">${esc(rec.status)}</span> · confidence <b>${conf.toFixed(2)}</b>
+          ${h.verdict ? ` · human verdict <span class="chip ${vclass(h.verdict)}">${esc(h.verdict)}</span> ${inr(h.payout)} by ${esc(h.reviewer)}` : ""}</div>
+        ${reasons ? `<div class="kv" style="margin-top:6px">Escalated: ${reasons}</div>` : ""}
+      </div>
+    </div>
+    <p class="kv" style="margin-top:12px">${esc(dec.rationale || "")}</p>
+    <div class="kv">Cited clauses (click to read): ${(dec.clauses || []).map((c) => `<span class="clause" data-id="${esc(c)}">${esc(c)}</span>`).join("") || "<i>none</i>"}</div>
+    ${checkLine(exp, rec)}
+  </div>`;
+}
+
+function reviewCard(rec) {
+  const h = rec.human || {};
+  if (rec.status !== "escalated" || !h.ticket) return "";
+  const rec_payout = (rec.decision || {}).payout;
+  return `<div class="card" style="border-color:#d9c8fb"><h3>Human Review Desk · ticket ${esc(h.ticket)}</h3>
+    <p class="kv">The system recommends <b>${inr(rec_payout)}</b>. The final decision belongs to a human reviewer.</p>
+    <form class="review" id="review-form">
+      <div class="opts">
+        <label><input type="radio" name="verdict" value="approve" checked> Approve (${inr(rec_payout)})</label>
+        <label><input type="radio" name="verdict" value="partial"> Partial</label>
+        <label><input type="radio" name="verdict" value="reject"> Reject (₹0)</label>
+      </div>
+      <input type="number" name="payout" placeholder="Partial payout in ₹ (≤ ${rec_payout})" min="0" max="${rec_payout}" hidden>
+      <textarea name="note" rows="2" placeholder="Reviewer note (required)" required></textarea>
+      <input type="text" name="reviewer" value="Demo Reviewer" maxlength="80">
+      <div><button class="btn primary" type="submit">Record verdict and close the claim</button> <span class="muted" id="review-msg"></span></div>
+    </form></div>`;
+}
+
+function wireReview(form, id) {
+  const payout = form.querySelector("[name=payout]");
+  form.querySelectorAll("[name=verdict]").forEach((r) => r.onchange = () => { payout.hidden = form.verdict.value !== "partial"; });
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const body = { verdict: form.verdict.value, note: form.note.value.trim(), reviewer: form.reviewer.value.trim() || "Demo Reviewer" };
+    if (body.verdict === "partial") body.payout = Number(payout.value);
+    try {
+      await api(`/api/claims/${id}/review`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      await loadClaims(); await selectClaim(id);
+    } catch (err) { $("#review-msg").textContent = "Not recorded: " + err.message; }
+  };
+}
+
+function costCard(rec) {
+  const c = rec.cost;
+  if (!c) return "";
+  const total = c.deductions.reduce((s, x) => s + x.amount, 0);
+  return `<div class="card"><h3>Deductions (Cost Assessment — deterministic Python)</h3>
+    ${c.deductions.length ? `<table><thead><tr><th>Item</th><th>Reason</th><th>Clause</th><th class="num">Cut</th></tr></thead>
+    <tbody>${c.deductions.map((x) => `<tr><td>${esc(x.item)}</td><td>${esc(x.reason)}</td><td>${x.clause_id ? `<span class="clause" data-id="${esc(x.clause_id)}">${esc(x.clause_id)}</span>` : ""}</td><td class="num">${inr(x.amount)}</td></tr>`).join("")}</tbody>
+    <tfoot><tr><td colspan="3">Total deducted · bill-level payable ${inr(c.payable)}</td><td class="num">${inr(total)}</td></tr></tfoot></table>`
+    : `<div class="muted">No deductions.</div>`}
+    ${c.overclaim ? `<div class="check bad" style="margin-top:10px">Over-claim flag: the claim exceeds the payable amount by more than the configured margin.</div>` : ""}
+  </div>`;
+}
+
+function fraudCard(rec) {
+  const f = rec.fraud;
+  if (!f) return "";
+  const color = f.score >= 60 ? "var(--reject)" : f.score >= 30 ? "var(--partial)" : "var(--approve)";
+  const wp = f.waiting_period || {};
+  return `<div class="card"><h3>Fraud signal</h3>
+    <div style="display:flex;align-items:baseline;gap:10px"><span class="money">${f.score}</span><span class="muted">/ 100 · escalates at 60</span></div>
+    <div class="bar"><span style="width:${Math.min(100, f.score)}%;background:${color}"></span><span class="mark" style="left:60%"></span></div>
+    ${(f.details || []).length ? `<ul style="margin:8px 0 0;padding-left:18px">${f.details.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<div class="muted">No risk rule fired.</div>`}
+    <div class="kv" style="margin-top:8px">Waiting period: ${wp.excluded ? `<b style="color:var(--reject)">excluded</b> — ${esc(wp.rule || "")} ${wp.clause_id ? `<span class="clause" data-id="${esc(wp.clause_id)}">${esc(wp.clause_id)}</span>` : ""} ${wp.waiting_ends ? "(ends " + esc(wp.waiting_ends) + ")" : ""}` : (wp.accident ? "accident — waits don't apply" : "clear")}</div>
+  </div>`;
+}
+
+function traceCard(trace) {
+  return `<div class="card"><h3>Agent timeline — Policy and Fraud run side by side</h3>
+    <div class="lanes" id="lanes"></div></div>
+    <div class="card"><h3>Live trace (run log)</h3><div class="trace" id="trace"></div></div>`;
+}
+
+function playTrace(trace, animate) {
+  if (!trace.length) return;
+  const t0 = Date.parse(trace[0].ts);
+  // Lanes show the automated run only: a reviewer's verdict comes minutes later and would squash it.
+  // The automated run ends at the first pause of more than 20 s between logged steps (longer than any LLM call).
+  const cut = trace.findIndex((e, i) => i > 0 && Date.parse(e.ts) - Date.parse(trace[i - 1].ts) > 20000);
+  const auto = cut === -1 ? trace : trace.slice(0, cut);
+  const span = Math.max(1, Date.parse(auto[auto.length - 1].ts) - t0);
+  // lanes: first → last event per agent
+  const lanes = LANE_ORDER.map((a) => {
+    const evs = auto.filter((e) => e.agent === a);
+    if (!evs.length) return "";
+    const s = Date.parse(evs[0].ts) - t0, e = Date.parse(evs[evs.length - 1].ts) - t0;
+    const [name, color] = AGENTS[a];
+    return `<div class="agent" style="color:${color}">${name}</div>
+      <div class="lane" title="${s}–${e} ms"><span style="left:${(s / span) * 100}%;width:${Math.max(0.6, ((e - s) / span) * 100)}%;background:${color}"></span></div>`;
+  }).join("");
+  $("#lanes").innerHTML = lanes + `<div></div><div class="muted" style="font-size:11.5px">automated run: 0 ms → ${span} ms (${auto.length} logged steps)${cut === -1 ? "" : " · the reviewer's verdict follows in the trace"}</div>`;
+
+  const box = $("#trace");
+  box.innerHTML = "";
+  const row = (e) => {
+    const [name, color] = AGENTS[e.agent] || [e.agent, "#334155"];
+    const div = document.createElement("div");
+    div.className = "ev";
+    div.innerHTML = `<span class="ms">+${Date.parse(e.ts) - t0} ms</span><span class="agent" style="color:${color}">${esc(name)}</span>
+      <span class="tool">${esc(e.tool || e.action || "")}${e.section ? " · " + esc(e.section) : ""}</span><span>${esc(e.summary || "")}</span>`;
+    box.appendChild(div);
+  };
+  if (!animate) { trace.forEach(row); return; }
+  let i = 0;
+  const step = () => { if (i < trace.length) { row(trace[i++]); box.scrollTop = box.scrollHeight; setTimeout(step, 45); } };
+  step();
+}
+
+async function runClaim(id) {
+  if (state.busy) return;
+  state.busy = true;
+  const btn = $("#run-one");
+  if (btn) { btn.disabled = true; btn.textContent = "Agents working…"; }
+  try {
+    await api(`/claims/${id}/run`, { method: "POST" });
+    await loadClaims();
+    await selectClaim(id, { animate: true });
+    refreshLlm();
+  } catch (err) {
+    alertBox(`Run failed: ${err.message}`);
+    if (btn) { btn.disabled = false; btn.textContent = "Run ClaimLens"; }
+  } finally { state.busy = false; }
+}
+
+async function showClause(id) {
+  try {
+    const c = await api(`/api/clauses/${encodeURIComponent(id)}`);
+    $("#modal-body").innerHTML = `<h3 style="margin-top:0">${esc(c.clause_id)}${c.title ? " · " + esc(c.title) : ""}</h3><pre>${esc(c.text)}</pre>
+      <div class="muted" style="font-size:12px">From the RAG corpus (data/corpus/chunks.jsonl).</div>`;
+  } catch (err) { $("#modal-body").textContent = err.message; }
+  $("#modal").classList.add("open");
+}
+function alertBox(msg) { $("#modal-body").innerHTML = `<p>${esc(msg)}</p>`; $("#modal").classList.add("open"); }
+$("#modal-close").onclick = () => $("#modal").classList.remove("open");
+$("#modal").onclick = (e) => { if (e.target.id === "modal") $("#modal").classList.remove("open"); };
+
+// ---------------------------------------------------------------- evaluation (S6)
+
+function renderEval() {
+  const rows = state.claims.map((c) => {
+    const e = c.expected || {}, a = c.current;
+    let ok = null;
+    // Same check as tests/test_scenarios.py: verdict and payout must both match the hand-worked values.
+    if (a) ok = e.halt ? a.halt === e.halt : (a.verdict === e.verdict && a.payout === e.payable);
+    return { c, e, a, ok };
+  });
+  const run = rows.filter((r) => r.a);
+  const okCount = run.filter((r) => r.ok).length;
+  $("#tab-eval").innerHTML = `<div class="card">
+      <div style="display:flex;align-items:center;gap:18px">
+        <div><div class="acc">${run.length ? okCount + " / " + run.length : "—"}</div><div class="muted">scenarios matching the hand-worked result</div></div>
+        <div class="spacer"></div><button class="btn primary" id="run-all-2">Run all 7 scenarios</button>
+      </div></div>
+    <div class="card"><h3>Expected vs actual (expected values worked by hand in data/claims/&lt;id&gt;/expected.json)</h3>
+    <table><thead><tr><th>#</th><th>Scenario</th><th>Expected</th><th>Actual</th><th>Status</th><th></th></tr></thead><tbody>
+    ${rows.map(({ c, e, a, ok }) => `<tr>
+      <td>${esc(c.scenario)}</td><td>${esc(c.title)}<div class="id muted" style="font-family:var(--mono);font-size:11.5px">${esc(c.claim_id)}</div></td>
+      <td>${e.halt ? `<span class="chip v-halt">halt</span> ${esc(e.halt)}` : `<span class="chip ${vclass(e.verdict)}">${esc(e.verdict)}</span> ${inr(e.payable)}`}</td>
+      <td>${a ? (a.halt ? `<span class="chip v-halt">halt</span> ${esc(a.halt)}` : `<span class="chip ${vclass(a.verdict)}">${esc(a.verdict)}</span> ${inr(a.payout)}`) : `<span class="muted">not run</span>`}</td>
+      <td>${a ? `<span class="chip ${sclass(a.status)}">${esc(a.status)}</span>` : ""}</td>
+      <td style="font-size:16px">${ok === null ? "" : ok ? "✅" : "❌"}</td></tr>`).join("")}
+    </tbody></table></div>`;
+  $("#run-all-2").onclick = runAll;
+}
+
+async function runAll() {
+  if (state.busy) return;
+  state.busy = true;
+  const buttons = [$("#run-all"), $("#run-all-2")].filter(Boolean);
+  buttons.forEach((b) => { b.disabled = true; });
+  try {
+    for (const c of state.claims) {
+      buttons.forEach((b) => { b.textContent = `Running ${c.claim_id}…`; });
+      await api(`/claims/${c.claim_id}/run`, { method: "POST" });
+    }
+    await loadClaims();
+    refreshLlm();
+    showTab("eval");
+  } catch (err) { alertBox(`Run failed: ${err.message}`); }
+  finally {
+    state.busy = false;
+    [$("#run-all"), $("#run-all-2")].filter(Boolean).forEach((b) => { b.disabled = false; b.textContent = "Run all 7 scenarios"; });
+  }
+}
+$("#run-all").onclick = runAll;
+
+// ---------------------------------------------------------------- tabs
+
+function showTab(name) {
+  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === name));
+  ["claim", "eval", "arch"].forEach((n) => { $("#tab-" + n).hidden = n !== name; });
+}
+document.querySelectorAll(".tab").forEach((t) => t.onclick = () => showTab(t.dataset.tab));
+
+loadHeader();
+loadClaims().catch((err) => { $("#claim-list").innerHTML = `<div class="muted">Could not load claims: ${esc(err.message)}</div>`; });
+</script>
+</body>
+</html>
