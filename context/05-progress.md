@@ -12,6 +12,7 @@ This is the single source of truth for where the project stands. Read it at the 
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-10 | The Indian health-claims variant is taken as a valid Q1 answer; no instructor confirmation needed | The professor is open to both generic and domain variants; the architecture maps 1:1 onto Q1 (five named agents, fan-out / fan-in, human routing). Corpus stays the IFFCO wording + IRDAI lists; partial approve stays as a fourth verdict |
 | 2026-11-10 | **Model lane: free open-weight models over OpenAI-compatible APIs** — Groq (`qwen/qwen3.8-27b`, reasoning hidden) first, NVIDIA build (`nvidia/nemotron-3.5-lightning-30b-a3b`, thinking off) second, rule-based extractor last. Keys `GROQ_API_KEY` / `NVIDIA_API_KEY` in `.env`; providers, models and caps in `config.yaml` `llm:` | No cost, no card; Groq has the clearest free limits and is fast for a live demo; Nemotron gives an NVIDIA open model as backup. Ruled out: Ollama (7.3 GB laptop, servers can't host a model), Hugging Face (≈$0.10/month free credit), OpenRouter (50 free requests/day), Kaggle (GPU notebooks, not an API) |
 | 2026-11-10 | Models re-picked after the first live ping: Groq had dropped `llama-3.3-70b-versatile` (404) and NVIDIA retired `nemotron-3-nano-30b-a3b` on 2026-09-01 (410). Tried the claim-1 extraction on each candidate: `qwen/qwen3.8-27b` 10/10 fields agree, 0.6 s; `openai/gpt-oss-120b` 9/10; `nemotron-3.5-lightning-30b-a3b` 10/10; `nemotron-nano-3-30b-a3b` and `nemotron-3-super-120b-a12b` 404 for this account. Added `python -m tools.llm_client models` and a 404/410 hint | Free catalogs change without notice; the fix is a config edit, and the tool now says so |
 | 2026-11-10 | `tools/llm_client.py` calls `/chat/completions` with `httpx` (not an MAF chat client) | Reads the providers' `x-ratelimit-*` headers and token usage for the caps; one small dependency on the lean servers (`httpx` added to `requirements-server.txt`); the workflow itself stays on MAF |
@@ -86,7 +87,7 @@ This is the single source of truth for where the project stands. Read it at the 
 | 2026-10-19 | Escalation thresholds: > ₹2,00,000, risk ≥ 60, no grounding clause | Starting values; tune in config.yaml |
 
 ## Open questions
-- [ ] Confirm with the instructor that the Indian health-claims variant counts as Q1.
+- [x] Indian health-claims variant counts as Q1 (2026-11-10): the professor accepts either a generic or a domain variant, so no confirmation needed.
 - [x] Team size: solo (2026-11-04).
 - [ ] Solo scope: keep all seven agents, or drop the Grievance Drafter (S2 only)? The Human Review Desk stays, because M11 is a must-have.
 - [x] Framework: Microsoft Agent Framework, `agent-framework-core==1.24.0` (2026-11-05).
@@ -163,6 +164,8 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-10** · Suharshit · Decided the Indian variant counts as Q1 (professor open to both); open question closed. · Next: unchanged.
 
 - **2026-11-10** · Suharshit · PR #15 (`feat/m1-llm-intake`) merged → M1 Done; every must-have complete. · Next: re-run demo + sample run, README page check, slides, viva prep, AWS deploy; then S5/S6.
 
