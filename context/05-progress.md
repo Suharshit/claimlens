@@ -3,15 +3,17 @@
 This is the single source of truth for where the project stands. Read it at the start of every chat. Update it at the end of every working session: change task statuses, add a session-log entry (newest first), and record any decision or open question.
 
 ## Current status
-- **Phase:** All must-haves (M1–M15) done — LLM intake merged (#15); all seven scenarios pass end to end with and without the LLM; submission pieces and should-haves left
+- **Phase:** Submission ready — all must-haves (M1–M15) and S1, S4, S6 done and merged to `main` (#15, #16, #17); 306 tests pass from the submission zip on a clean install
 - **Current week:** Week 3 / final week by calendar (10 Nov); deadline 15 Nov
-- **Last updated:** 2026-11-10
-- **Next action (Suharshit):** push `docs/progress-m1-done` → PR → merge; then push `feat/s4-demo-website` → PR → merge. Try the site: `python api.py` → http://localhost:8000. Then slides + viva prep, INT333 `make up ENV=dev` (the site comes with it). Full list: `HANDOFF.md`.
+- **Last updated:** 2026-11-14
+- **Next action (Suharshit):** CSE476 zip submitted. Commit + PR + merge branch `fix/nagios-cgi-swap` (Nagios role fixes + README test count). INT333: dev stack is live in Sydney (`site_url` http://16.178.140.114) — rehearse the S11 demo runbook, then `make down` when done (≈ $0.08/h from the $100 AWS credit). Then CSE476 slides + viva prep.
 
 ## Decisions made
 
 | Date | Decision | Why |
 | --- | --- | --- |
+| 2026-11-14 | INT333 AWS account = new project-based Free plan ($100 credit, 6 months, $5 budget alert); IAM user `terraform` (AdministratorAccess) keys only in WSL `~/.aws`. **Region `ap-southeast-2` (Sydney)**, set by `aws_region` in the git-ignored `terraform.tfvars`; `ap-south-1` stays the code default | The project account's AWS-managed service control policy denies every API call outside the project's region (Sydney), so Mumbai failed with an explicit SCP deny; no code change needed |
+| 2026-11-14 | Nagios role: `a2enmod cgi` (+ `Restart apache2` handler) and `-n ok` on the default localhost swap check | Ubuntu's nagios4 package leaves Apache CGI off, so status.cgi downloaded instead of running; EC2 has no swap, so the default swap check was always CRITICAL |
 | 2026-11-10 | **S4 demo UI = a web page served by the FastAPI app** (`web/index.html` at `GET /`, JSON routes `/api/claims`, `/api/claims/{id}`, `/api/claims/{id}/review`, `/api/clauses/{id}`) instead of the Streamlit `app.py` planned in 04 | Benefits both courses: the CSE476 demo and the app the INT333 pipeline already deploys to AWS (Streamlit can't run on the 1 GB servers); no new dependency; vanilla HTML/JS, no CDN, so it works offline at the viva. 04 left unchanged; this row supersedes its Streamlit line |
 | 2026-11-10 | The website's Evaluation tab is the S6 accuracy table: expected (hand-worked `expected.json`) vs actual per scenario, same verdict + payout check as `tests/test_scenarios.py` | No separate S6 artefact needed; 7/7 shown live |
 | 2026-11-10 | Fix: `create_review_ticket` writes an existing open ticket back into the record | A re-run of an escalated claim (`reset_state`) left it escalated with no ticket, so it could never be reviewed — found while testing the website's Run-again button; regression test in `test_scenarios.py` |
@@ -129,7 +131,7 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | ID | Task | Owner | Status | Notes |
 | --- | --- | --- | --- | --- |
 | — | Repo setup: scaffold, config, context/, smoke tests | All | Done | 2026-10-22; `pytest` green (smoke tests) |
-| — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged 2026-11-04; release **v0.1.0** published 2026-11-05 (tarball + sha256, release workflow green); next: WSL setup, `make up ENV=dev` on AWS |
+| — | DevOps pipeline (INT333): S0–S11 files | Suharshit | In progress | PR #1 merged 2026-11-04; v0.1.0 2026-11-05; **2026-11-14 deployed v0.2.0 to AWS ap-southeast-2 (dev)**: `make infra` 9 resources, `make configure` failed=0 (second run changed=0 on app/lb), Puppet certs signed + `puppet-run` OK, Nagios 24/24 services; LB serves the demo site and scenario 1. Left: rehearse S11 demo, merge the Nagios fixes, branch protection, `make down` |
 | M1 | Claim intake → structured record | A | Done | Rule-based `extract_claim_fields` (2026-11-05) + LLM path (Groq qwen3.8-27b → NVIDIA Nemotron 3.5 Lightning → rules, capped, rules-win cross-check), PR #15 merged 2026-11-10; live tests pass, 7/7 scenarios match with the LLM on |
 | M2 | Halt on missing policy id / amount | A | Done | 2026-11-05 `IntakeHalt(reason)` + `set_halt`; scenario 7 halts, nothing downstream runs |
 | M3 | RAG over policies + IRDAI, filtered by policy id | B | Done | 2026-11-04 chunking (202 chunks); 2026-11-05 `search_policy_clauses`, `get_policy_limits`, `search_irdai_rules` (BM25, 0–1 IDF-coverage score, policy filter); `tests/test_search.py` |
@@ -148,16 +150,16 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 | S1 | Deduction table in output | A | Done | Table from `compute_payable` (item, amount, reason, clause), shown in `demo.ipynb` and on the website with clickable clause ids |
 | S2 | Grievance letter draft | — | Not started | |
 | S3 | Missing-document check | — | Not started | |
-| S4 | Demo UI (web page, not Streamlit — see decisions) | C | In progress | 2026-11-10 built on `feat/s4-demo-website`: claim list, run, decision card, clause pop-ups, deductions, fraud gauge, agent timeline lanes, live trace, Human Review Desk form, Evaluation and Architecture tabs; `tests/test_web.py` (14). Done once merged |
+| S4 | Demo UI (web page, not Streamlit — see decisions) | C | Done | 2026-11-10 built; merged as #16 (site) and #17 (architecture SVG): claim list, run, decision card, clause pop-ups, deductions, fraud gauge, agent timeline lanes, live trace, Human Review Desk form, Evaluation and Architecture tabs; `tests/test_web.py` |
 | S5 | Retrieval hit@3 check | B | Not started | |
-| S6 | Accuracy table | A | In progress | 2026-11-10 the website's Evaluation tab (expected vs actual, 7/7); Done with S4's merge |
+| S6 | Accuracy table | A | Done | The website's Evaluation tab (expected vs actual, 7/7); merged with S4 (#16) |
 
 ## Submission checklist
 - [x] Built on Microsoft Agent Framework (`workflow.py`)
 - [x] ≥ 4 agents, one module each (7)
 - [x] Every agent calls ≥ 2 Python tools
 - [x] RAG grounding + shared state used by every agent
-- [x] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure) — checked 2026-11-10: exactly 2 A4 pages rendered with the diagram (floated beside the details)
+- [x] README ≤ 2 pages (roster, architecture + why, tools, memory/retrieval, one honest failure) — checked 2026-11-10: exactly 2 A4 pages rendered with the diagram (floated beside the details); test count corrected to 306 on 2026-11-13
 - [x] Sample run committed (`logs/run_log.jsonl`, `state/CLM-0001.json`, `state/CLM-0004.json`, force-added 2026-11-10)
 - [x] Runnable demo notebook with multi-agent trace (`demo.ipynb`)
 - [x] Architecture diagram (`architecture.png`)
@@ -169,6 +171,10 @@ Status values: Not started · In progress · Done · Blocked. IDs match 03-featu
 
 ## Session log (newest first)
 Format: date · who · what was done · what's next.
+
+- **2026-11-14** · Suharshit + Claude · INT333 first real deploy. AWS Free-plan account (project "Moonshot Mode", $100 credit), $5 budget, IAM user `terraform`, AWS CLI v2 in WSL, SSH key. Release `v0.2.0` tagged. `make infra ENV=dev` hit an SCP explicit deny in ap-south-1 → deployed to ap-southeast-2 (tfvars `aws_region`). `make configure VERSION=v0.2.0` failed=0; Puppet certs signed, `make puppet-run` OK; LB `/healthz` 200 and `POST /claims/CLM-0001/run` closed; Nagios via SSH tunnel. Fixed two Nagios issues in the role (Apache CGI off → status.cgi downloaded; no-swap CRITICAL) and re-ran Ansible: app/lb changed=0, Nagios 24/24 OK. Fixes on `fix/nagios-cgi-swap`, not merged yet. · Next: merge the fix PR; rehearse the S11 demo; `make down` after; CSE476 slides + viva.
+
+- **2026-11-13** · Claude (Suharshit's request) · Submission check: `main` = GitHub, holds #15–#17; the other local branches only lag behind it. Built `dist/ClaimLens_CSE476_CA2.zip` (354 KB, `git archive` of `main` — `.env`, `.venv`, caches excluded; `.gitattributes` export-ignore drops infra/, context/, .github/ and the DevOps template). Unzipped on a clean Python 3.13, `pip install -r requirements.txt`, `pytest`: 306 passed / 1 skipped / 4 live deselected; ruff clean. README said "291 offline tests" → fixed to 306 in the working tree and the zip (not yet committed). Decision: no other changes before submission. · Next: submit the zip; commit the README fix via PR; slides; viva prep.
 
 - **2026-11-11** · Claude (Suharshit's request) · Website Architecture tab: the low-res `architecture.png` replaced by an inline, tall SVG drawn from `architecture.mmd` — main flow down the middle, halt branch left, fan-out band, fan-in to the Manager, escalation triggers in the Human Review Desk box, and the shared claim-state record + run log as a full-height rail with each agent's dashed write to its own section; adds the LLM second reading on Intake. Checked in a headless browser. · Next: merge `feat/s4-demo-website`; slides; viva prep; AWS deploy.
 
