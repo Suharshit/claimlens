@@ -50,7 +50,7 @@ The RAG corpus, `data/corpus/chunks.jsonl`, is the IFFCO Tokio *Arogya Sanjeevan
 | 6 | Policy with no wording in the corpus | escalate: "no grounding clause found" |
 | 7 | No amount, no bill | intake halts; nothing downstream runs |
 
-Expected values are hand-worked in `data/claims/<id>/expected.json`. 291 offline tests + 4 live API checks (`pytest -m live`); with the real LLM on, all 7 verdicts hold.
+Expected values are hand-worked in `data/claims/<id>/expected.json`. 306 offline tests + 4 live API checks (`pytest -m live`); with the real LLM on, all 7 verdicts hold.
 
 ## One honest failure
 

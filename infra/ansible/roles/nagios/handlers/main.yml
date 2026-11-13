@@ -2,3 +2,8 @@
 - name: Restart nagios
   ansible.builtin.shell: nagios4 -v /etc/nagios4/nagios.cfg && systemctl restart nagios4
   changed_when: true
+
+- name: Restart apache2
+  ansible.builtin.systemd_service:
+    name: apache2
+    state: restarted

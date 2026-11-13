@@ -48,3 +48,6 @@ infra/ansible/inventory/hosts.ini
 # secrets: never commit these
 *.pem
 .vault_pass*
+
+# personal local notes (start/stop runbook etc.) — never pushed
+*.local.md
